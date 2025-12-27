@@ -1,11 +1,3 @@
-//ESBOÇO
-
-// params
-// schema
-// default
-// normalizeFromUrl
-// updateUrl
-
 import { useMemo, useState } from "react"
 
 type Direction = '-' | ''
@@ -181,7 +173,36 @@ export function useUrlQuery({
 	function remPage() {
 		setPage(null);
 	}
-	
+
+	//INCLUDE
+	const [includes, setIncludes] = useState<string[]>([]);
+
+	const includeString = useMemo(() => {
+		return includes.join(',');
+	}, [includes]);
+
+	const includeQueryString = useMemo(() => {
+		return includeString ? 'include=' + includeString : '';
+	}, [includeString]);
+
+	function addInclude(includes: string | string[]) {
+		const newIncludes = Array.isArray(includes) ? includes : [includes];
+
+		setIncludes(newIncludes);
+
+		return true;
+	}
+
+	function remInclude(includesParam: string | string[]) {
+		const remIncludes = Array.isArray(includesParam) ? includesParam : [includesParam];
+
+		const newIncludes = includes.filter(inc => !remIncludes.includes(inc));
+
+		setIncludes(newIncludes);
+
+		return true;
+	}
+
 	//PER PAGE
 	const [perPage, setPerPage] = useState<PerPage>(null);
 	
@@ -220,6 +241,13 @@ export function useUrlQuery({
 		toggleDirectionSort,
 		sortIsAsc,
 		sortIsDesc,
+		//INCLUDE
+		includes,
+		setIncludes,
+		includeString,
+		includeQueryString,
+		addInclude,
+		remInclude,
 		//PAGE
 		page,
 		setPage,
@@ -242,6 +270,7 @@ export function useUrlQuery({
 /*
 FEATURES FUTURAS:
 - Suporte a filtros
+- suporte a fields
 - normalização de valores vindos da URL
 - atualização da URL
 - tests podem ser melhoradods, no goUpSort ele deve rodar todos os tests para cada data set: column = p0 column = n !== 0

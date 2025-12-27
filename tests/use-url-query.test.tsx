@@ -195,6 +195,47 @@ describe('sort', () => {
 	});
 })
 
+describe('include', () => {
+	describe('addInclude', () => {
+		const { result: { current: urlQuery } } = renderHook(() =>
+			useUrlQuery({
+				sorts: ["asc", "desc", "name"]
+			})
+		);
+
+		it('should return true if successful', () => {
+			expect(urlQuery.addInclude('desc')).toBe(true);
+		});
+	});
+
+	describe('remInclude', () => {
+		const { result: { current: urlQuery } } = renderHook(() =>
+			useUrlQuery({
+				sorts: ["asc", "desc", "name"]
+			})
+		);
+
+		it('should return true if successful', () => {
+			expect(urlQuery.addInclude('desc')).toBe(true);
+		});
+	});
+
+	it.each([
+		[["author"], ["author"]],
+		[["author", "comments"], ["author", "comments"]],
+	])('when set includes state as %s, includes state should return "%s"', (includes, state) => {
+		const { result } = renderHook(() =>
+			useUrlQuery({})
+		);
+
+		act(() => {
+			result.current.setIncludes(includes);
+		});
+
+		expect(result.current.includes).toEqual(state);
+	});
+});
+
 describe('page', () => {
 	it.each([
 		[null, null],
@@ -273,6 +314,92 @@ describe('query strings', () => {
 
 		it('should return correct query string', () => {
 			expect(urlQuery.queryString).toBe('?sort=asc,desc');
+		});
+	});
+
+	describe('include', () => {
+		describe('addInclude', () => {
+			it.each([
+				['', ''],
+				[['author'], 'author'],
+				// [['author', 'comments'], 'author,comments'],
+			])('when set includes state as %s, includeString should return "%s"', (includes, includeString) => {
+				const { result } = renderHook(() =>
+					useUrlQuery({})
+				);
+
+				act(() => {
+					result.current.addInclude(includes);
+				});
+
+				expect(result.current.includeString).toBe(includeString);
+			})
+
+			it.each([
+				['', ''],
+				[['author'], 'include=author'],
+				[['author', 'comments'], 'include=author,comments'],
+			])('when set includes state as %s, includeQueryString should return "%s"', (includes, includeQueryString) => {
+				const { result } = renderHook(() =>
+					useUrlQuery({})
+				);
+
+				act(() => {
+					result.current.addInclude(includes);
+				});
+
+				expect(result.current.includeQueryString).toBe(includeQueryString);
+			})
+		});
+
+		describe('remInclude', () => {
+			it.each([
+				['', '', ''],
+				[[''], ['one'], ''],
+				[['one'], [''], 'one'],
+				[['one', 'two', 'three'], ['one'], 'two,three'],
+				[['one', 'two', 'three'], ['two'], 'one,three'],
+				[['one', 'two', 'three'], ['three'], 'one,two'],
+				[['one', 'two', 'three'], ['one', 'two', 'three'], ''],
+			])('when set includes state as %s, includeString should return "%s"', (initial, toRem, expected) => {
+				const { result } = renderHook(() =>
+					useUrlQuery({})
+				);
+
+				act(() => {
+					result.current.addInclude(initial);
+				});
+
+				act(() => {
+					result.current.remInclude(toRem);
+				});
+
+				expect(result.current.includeString).toBe(expected);
+			})
+
+			it.each([
+				['', '', ''],
+				[[''], ['one'], ''],
+				[['one'], [''], 'include=one'],
+				[['one', 'two', 'three'], ['one'], 'include=two,three'],
+				[['one', 'two', 'three'], ['two'], 'include=one,three'],
+				[['one', 'two', 'three'], ['three'], 'include=one,two'],
+				[['one', 'two', 'three'], ['one', 'two', 'three'], ''],
+			])('when set includes state as %s, includeQueryString should return "%s"', (initial, toRem, expected) => {
+				const { result } = renderHook(() =>
+					useUrlQuery({})
+				);
+
+				act(() => {
+					result.current.addInclude(initial);
+				});
+
+				act(() => {
+					result.current.remInclude(toRem);
+				});
+
+				expect(result.current.includeQueryString).toBe(expected);
+			})
 		});
 	});
 
