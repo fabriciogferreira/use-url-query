@@ -219,21 +219,6 @@ describe('include', () => {
 			expect(urlQuery.addInclude('desc')).toBe(true);
 		});
 	});
-
-	it.each([
-		[["author"], ["author"]],
-		[["author", "comments"], ["author", "comments"]],
-	])('when set includes state as %s, includes state should return "%s"', (includes, state) => {
-		const { result } = renderHook(() =>
-			useUrlQuery({})
-		);
-
-		act(() => {
-			result.current.setIncludes(includes);
-		});
-
-		expect(result.current.includes).toEqual(state);
-	});
 });
 
 describe('page', () => {

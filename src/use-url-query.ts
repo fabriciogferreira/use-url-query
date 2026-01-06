@@ -1,4 +1,6 @@
-import { useMemo, useState } from "react"
+import { useMemo, useState, Dispatch, SetStateAction } from "react"
+
+type Set<T> = Dispatch<SetStateAction<T>>
 
 type Direction = '-' | ''
 
@@ -11,16 +13,81 @@ type Sort = {
 
 type SortParam = Pick<Sort, 'column' | 'label'>[] | Sort['column'][]
 
-type Page = number | null
-type PerPage = number | null
-
-type UseUrlQueryParams = {
+type Params = {
 	sorts?: SortParam;
 }
 
-export function useUrlQuery({
+type Sorts = Sort[];
+type SortString = string;
+type SortQueryString = string;
+type QueryString = string;
+type FindSort = (column: string) => Sort | undefined;
+type GoUpSort = (column: string) => true | undefined;
+type InternalGoUpSort = (sorts: Sort[], index: number) => Sort[];
+type GoDownSort = (column: string) => boolean | undefined;
+type InternalGoDownSort = (sorts: Sort[], index: number) => Sort[];
+type HasSort = (column: string) => boolean | undefined;
+type InternalToggleSortState = (sorts: Sort[], column: string) => Sort[];
+type ToggleSortState = (column: string) => boolean | undefined;
+type InternalToggleSortDirection = (sorts: Sort[], index: number) => Sort[];
+type ToggleDirectionSort = (column: string) => boolean | undefined;
+type SortIsAsc = (column: string) => boolean | undefined;
+type SortIsDesc = (column: string) => boolean | undefined;
+type Page = number | null
+type setPage = Set<Page>;
+type PageString = string;
+type PageQueryString = string;
+type RemPage = () => true;
+type IncludeString = string;
+type IncludeQueryString = string;
+type AddInclude = (includes: string | string[]) => true;
+type RemInclude = (includes: string | string[]) => true;
+type PerPage = number | null;
+type setPerPage = Set<PerPage>;
+type PerPageString = string;
+type PerPageQueryString = string;
+type RemPerPage = () => void;
+
+export type UseUrlQuery = (params: Params) => {
+	sorts: Sorts;
+	sortString: SortString;
+	sortQueryString: SortQueryString;
+	queryString: QueryString;
+	// sortToEnd: Function;
+	// sortToBegin: Function;
+	goUpSort: GoUpSort
+	internalGoUpSort: InternalGoUpSort;
+	goDownSort: GoDownSort;
+	internalGoDownSort: InternalGoDownSort;
+	hasSort: HasSort;
+	internalToggleSortState: InternalToggleSortState;
+	toggleSortState: ToggleSortState;
+	toggleDirectionSort: ToggleDirectionSort;
+	sortIsAsc: SortIsAsc;
+	sortIsDesc: SortIsDesc;
+	//PAGE
+	page: Page;
+	setPage: setPage;
+	pageString: PageString;
+	pageQueryString: PageQueryString;
+	remPage: RemPage;
+	//INCLUDE
+	includeString: IncludeString;
+	includeQueryString: IncludeQueryString;
+	addInclude: AddInclude;
+	remInclude: RemInclude;
+	//PER PAGE
+	perPage: PerPage;
+	setPerPage: setPerPage;
+	perPageString: PerPageString;
+	perPageQueryString: PerPageQueryString;
+	remPerPage: RemPerPage;
+}
+
+
+export const useUrlQuery: UseUrlQuery = ({
 	sorts: initialSorts = []
-}: UseUrlQueryParams) {
+}) => {
 	const normalizedSorts: Sort[] = initialSorts.map(Parasort => {
 		const restItem = typeof Parasort === 'string'
 			? { column: Parasort, label: Parasort }
@@ -35,23 +102,23 @@ export function useUrlQuery({
 
 	const [sorts, setSorts] = useState<Sort[]>(normalizedSorts);
 
-	const sortString = useMemo(() => sorts.map(sort => sort.direction + sort.column)
+	const sortString: SortString = useMemo(() => sorts.map(sort => sort.direction + sort.column)
 		.join(','), [sorts]);
 
-	const sortQueryString = useMemo(() => {
+	const sortQueryString: SortQueryString = useMemo(() => {
 		return 'sort=' + sortString;
 	}, [sortString]);
 
-	const queryString = useMemo(() => {
+	const queryString: QueryString = useMemo(() => {
 		return '?' + sortQueryString;
 	}, [sortQueryString]);
 
-	function findSort(column: string) {
+	const findSort: FindSort = (column: string) => {
 		return sorts.find(sort => sort.column === column);
 	}
 	// function sortToEnd() { };
 	// function sortToBegin() { };
-	function internalGoUpSort(sorts: Sort[], index: number): Sort[] {
+	const internalGoUpSort: InternalGoUpSort = (sorts: Sort[], index: number): Sort[] => {
 		const newSorts = [...sorts];
 
 		if (index >= 1) {
@@ -63,7 +130,7 @@ export function useUrlQuery({
 
 		return newSorts;
 	}
-	function goUpSort(column: string) {
+	const goUpSort: GoUpSort = (column: string) => {
 		let index = sorts.findIndex(sort => sort.column === column);
 
 		if (index < 0) return undefined;
@@ -74,7 +141,7 @@ export function useUrlQuery({
 
 		return true;
 	};
-	function internalGoDownSort(sorts: Sort[], index: number): Sort[] {
+	const internalGoDownSort: InternalGoDownSort = (sorts: Sort[], index: number): Sort[] => {
 		const newSorts = [...sorts];
 
 		if (index < sorts.length - 1) {
@@ -86,7 +153,7 @@ export function useUrlQuery({
 
 		return newSorts;
 	}
-	function goDownSort(column: string) {
+	const goDownSort: GoDownSort = (column: string) => {
 		let index = sorts.findIndex(sort => sort.column === column);
 
 		if (index < 0) return undefined;
@@ -99,10 +166,10 @@ export function useUrlQuery({
 	}
 	// function swapSorts() { };
 	// function moveSortTo() { };
-	function hasSort(column: string) {
+	const hasSort: HasSort = (column: string) => {
 		return findSort(column) !== undefined;
 	};
-	function internalToggleSortState(sorts: Sort[], column: string) {
+	const internalToggleSortState: InternalToggleSortState = (sorts: Sort[], column: string) => {
 		const newSorts = [...sorts];
 
 		const index = newSorts.findIndex(sort => sort.column === column);
@@ -111,7 +178,7 @@ export function useUrlQuery({
 
 		return newSorts;
 	}
-	function toggleSortState(column: string) {
+	const toggleSortState: ToggleSortState = (column: string) => {
 		const sort = findSort(column);
 
 		if (sort === undefined) return sort
@@ -126,14 +193,14 @@ export function useUrlQuery({
 	// function enableSort() { }
 	// function disableSorts() { };
 	// function enableSorts() { }
-	function internalToggleSortDirection(sorts: Sort[], index: number) {
+	const internalToggleSortDirection: InternalToggleSortDirection = (sorts: Sort[], index: number) => {
 		const newSorts = [...sorts];
 
 		newSorts[index].direction = newSorts[index].direction === '' ? '-' : '';
 
 		return newSorts;
 	}
-	function toggleDirectionSort(column: string) {
+	const toggleDirectionSort: ToggleDirectionSort = (column: string) => {
 		const index = sorts.findIndex(s => s.column === column);
 
 		if (index === -1) return undefined
@@ -144,14 +211,14 @@ export function useUrlQuery({
 
 		return true
 	}
-	function sortIsAsc(column: string) {
+	const sortIsAsc: SortIsAsc = (column: string) => {
 		const sort = findSort(column);
 
 		if (sort === undefined) return sort
 
 		return sort.direction === '';
 	};
-	function sortIsDesc(column: string) {
+	const sortIsDesc: SortIsDesc = (column: string) => {
 		const sort = findSort(column);
 
 		if (sort === undefined) return sort
@@ -162,30 +229,31 @@ export function useUrlQuery({
 	//PAGE
 	const [page, setPage] = useState<Page>(null);
 	
-	const pageString = useMemo(() => {
+	const pageString: PageString  = useMemo(() => {
 		return page ? page.toString() : '';
 	}, [page]);
 	
-	const pageQueryString = useMemo(() => {
+	const pageQueryString: PageQueryString  = useMemo(() => {
 		return pageString ? 'page=' + pageString : '';
 	}, [pageString]);
 
-	function remPage() {
+	const remPage: RemPage = () => {
 		setPage(null);
+		return true
 	}
 
 	//INCLUDE
 	const [includes, setIncludes] = useState<string[]>([]);
 
-	const includeString = useMemo(() => {
+	const includeString: IncludeString = useMemo(() => {
 		return includes.join(',');
 	}, [includes]);
 
-	const includeQueryString = useMemo(() => {
+	const includeQueryString: IncludeQueryString = useMemo(() => {
 		return includeString ? 'include=' + includeString : '';
 	}, [includeString]);
 
-	function addInclude(includes: string | string[]) {
+	const addInclude: AddInclude = (includes: string | string[]) => {
 		const newIncludes = Array.isArray(includes) ? includes : [includes];
 
 		setIncludes(newIncludes);
@@ -193,7 +261,7 @@ export function useUrlQuery({
 		return true;
 	}
 
-	function remInclude(includesParam: string | string[]) {
+	const remInclude: RemInclude = (includesParam: string | string[]) => {
 		const remIncludes = Array.isArray(includesParam) ? includesParam : [includesParam];
 
 		const newIncludes = includes.filter(inc => !remIncludes.includes(inc));
@@ -206,16 +274,17 @@ export function useUrlQuery({
 	//PER PAGE
 	const [perPage, setPerPage] = useState<PerPage>(null);
 	
-	const perPageString = useMemo(() => {
+	const perPageString: PerPageString = useMemo(() => {
 		return perPage ? perPage.toString() : '';
 	}, [perPage]);
 
-	const perPageQueryString = useMemo(() => {
+	const perPageQueryString: PerPageQueryString = useMemo(() => {
 		return perPageString ? 'perPage=' + perPageString : '';
 	}, [perPageString]);
 
-	function remPerPage() {
+	const remPerPage: RemPerPage = () => {
 		setPerPage(null);
+		return true;
 	}
 
 	return {
@@ -241,19 +310,18 @@ export function useUrlQuery({
 		toggleDirectionSort,
 		sortIsAsc,
 		sortIsDesc,
-		//INCLUDE
-		includes,
-		setIncludes,
-		includeString,
-		includeQueryString,
-		addInclude,
-		remInclude,
 		//PAGE
 		page,
 		setPage,
 		pageString,
 		pageQueryString,
 		remPage,
+		//INCLUDE
+		includes,
+		includeString,
+		includeQueryString,
+		addInclude,
+		remInclude,
 		//PER PAGE
 		perPage,
 		setPerPage,
@@ -264,8 +332,6 @@ export function useUrlQuery({
 		queryString,
 	}
 }
-
-
 
 /*
 FEATURES FUTURAS:
