@@ -84,6 +84,7 @@ export type UseUrlQuery = (params: Params) => {
 	remPerPage: RemPerPage;
 }
 
+export type UseUrlQueryContext = ReturnType<UseUrlQuery>;
 
 export const useUrlQuery: UseUrlQuery = ({
 	sorts: initialSorts = []
