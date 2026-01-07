@@ -18,6 +18,9 @@ type Params = {
 }
 
 //FILTER
+type Filters = Record<PropertyKey, unknown>;
+type FilterQueryString = string;
+type FilterBy = (column: string, value: unknown) => true;
 //SORT
 type Sorts = Sort[];
 type SortString = string;
@@ -57,6 +60,9 @@ type QueryString = string;
 
 export type UseUrlQuery = (params: Params) => {
 	//FILTER
+	filters: Filters;
+	filterQueryString: FilterQueryString;
+	filterBy: FilterBy;
 	//SORT
 	sorts: Sorts;
 	sortString: SortString;
@@ -111,6 +117,23 @@ export const useUrlQuery: UseUrlQuery = ({
 			include: false
 		}
 	});
+
+	//FILTER
+	const [filters, setFilters] = useState<Filters>({});
+
+	const filterQueryString: FilterQueryString = useMemo(() => Object.entries(filters)
+		.map(([key, value]) => `filter[${key}]=${value}`
+		)
+		.join(','), [filters]);
+
+	const filterBy: FilterBy = (column: string, value: unknown) => {
+		setFilters(prevFilters => ({
+			...prevFilters,
+			[column]: value
+		}));
+
+		return true;
+	};
 
 	//SORT
 	const [sorts, setSorts] = useState<Sort[]>(normalizedSorts);
@@ -268,12 +291,12 @@ export const useUrlQuery: UseUrlQuery = ({
 
 	//PAGE
 	const [page, setPage] = useState<Page>(null);
-	
-	const pageString: PageString  = useMemo(() => {
+
+	const pageString: PageString = useMemo(() => {
 		return page ? page.toString() : '';
 	}, [page]);
-	
-	const pageQueryString: PageQueryString  = useMemo(() => {
+
+	const pageQueryString: PageQueryString = useMemo(() => {
 		return pageString ? 'page=' + pageString : '';
 	}, [pageString]);
 
@@ -284,7 +307,7 @@ export const useUrlQuery: UseUrlQuery = ({
 
 	//PER PAGE
 	const [perPage, setPerPage] = useState<PerPage>(null);
-	
+
 	const perPageString: PerPageString = useMemo(() => {
 		return perPage ? perPage.toString() : '';
 	}, [perPage]);
@@ -305,6 +328,9 @@ export const useUrlQuery: UseUrlQuery = ({
 
 	return {
 		//FILTER
+		filters,
+		filterQueryString,
+		filterBy,
 		//SORT
 		sorts,
 		sortString,
@@ -354,6 +380,7 @@ export const useUrlQuery: UseUrlQuery = ({
 /*
 FEATURES FUTURAS:
 - trocar sort para sorting onde faz sentido
+- analisar nomencatura de funções, por exemplo: addInclude poderia ser apenas include
 - Suporte a appends
 - Suporte a filtros
 - suporte a fields
@@ -362,4 +389,23 @@ FEATURES FUTURAS:
 - tests podem ser melhoradods, no goUpSort ele deve rodar todos os tests para cada data set: column = p0 column = n !== 0
 - Implementar testes para usestatee
 - permitir configuração de delimitadores para include, appends, fields, sorts, filters
+
+- permitir alterar os nomes dos parâmetros: sort, include, append, fields, page, perPage, filter, exemplo sortAs: string, 
+	//STRING, NUMBER, BOOLEAN, ARRAY, NULL=''
+	// EQUAL, NOT_EQUAL, GREATER_THAN, LESS_THAN, GREATER_THAN_OR_EQUAL, LESS_THAN_OR_EQUAL, and DYNAMIC
+	//EQUAL - =
+	//NOT_EQUAL - != - ne
+	//GREATER_THAN - > - gt
+	//LESS_THAN - < - lt
+	//GREATER_THAN_OR_EQUAL - >= - gte
+	//LESS_THAN_OR_EQUAL - <= - lte
+	//DYNAMIC
+	// const filterByNE = '';
+	// const filterByGT = '';
+	// const filterByLT = '';
+	// const filterByGTE = '';
+	// const filterByLTE = '';
+	//CRIAR DEBOUNCED FILTER
+	// const filterDebouncedBy = '';
+	// const removeFilter = '';
 */
