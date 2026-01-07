@@ -346,7 +346,7 @@ export const useUrlQuery: UseUrlQuery = ({
 		perPageString,
 		perPageQueryString,
 		remPerPage,
-		//FULL QUERY STRING
+		//QUERY STRING
 		queryString,
 	}
 }
