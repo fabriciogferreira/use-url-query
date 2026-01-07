@@ -138,11 +138,11 @@ export const useUrlQuery: UseUrlQuery = ({
 	//SORT
 	const [sorts, setSorts] = useState<Sort[]>(normalizedSorts);
 
-	const sortString: SortString = useMemo(() => sorts.map(sort => sort.direction + sort.column)
+	const sortString: SortString = useMemo(() => sorts.filter(sort => sort.include).map(sort => sort.direction + sort.column)
 		.join(','), [sorts]);
 
 	const sortQueryString: SortQueryString = useMemo(() => {
-		return 'sort=' + sortString;
+		return sortString ? 'sort=' + sortString : '';
 	}, [sortString]);
 
 	const findSort: FindSort = (column: string) => {
@@ -323,8 +323,9 @@ export const useUrlQuery: UseUrlQuery = ({
 
 	//QUERY STRING
 	const queryString: QueryString = useMemo(() => {
-		return '?' + sortQueryString;
-	}, [sortQueryString]);
+		const parts = [filterQueryString, sortQueryString, includeQueryString, pageQueryString, perPageQueryString].filter(Boolean);
+		return parts.length ? '?' + parts.join('&') : '';
+	}, [filterQueryString, sortQueryString, includeQueryString, pageQueryString, perPageQueryString]);
 
 	return {
 		//FILTER

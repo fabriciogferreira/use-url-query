@@ -1,5 +1,5 @@
 import { useUrlQuery } from "../src/use-url-query";
-import { describe, expect, it } from "bun:test";
+import { beforeAll, describe, expect, it } from "bun:test";
 import { renderHook, act } from "@testing-library/react";
 
 describe('params', () => {
@@ -283,22 +283,26 @@ describe('perPage', () => {
 
 describe('query strings', () => {
 	describe('sort', () => {
-		const { result: { current: urlQuery } } = renderHook(() =>
+		const { result } = renderHook(() =>
 			useUrlQuery({
 				sorts: ["asc", "desc"]
 			})
 		);
 
 		it('should return correct sort string', () => {
-			expect(urlQuery.sortString).toBe('asc,desc');
+			act(() => {
+				result.current.toggleSortState('asc');
+				result.current.toggleSortState('desc');
+			});
+			expect(result.current.sortString).toBe('asc,desc');
 		});
 
 		it('should return correct sort query string', () => {
-			expect(urlQuery.sortQueryString).toBe('sort=asc,desc');
-		});
-
-		it('should return correct query string', () => {
-			expect(urlQuery.queryString).toBe('?sort=asc,desc');
+			act(() => {
+				result.current.toggleSortState('asc');
+				result.current.toggleSortState('desc');
+			});
+			expect(result.current.sortQueryString).toBe('sort=asc,desc');
 		});
 	});
 
@@ -463,4 +467,99 @@ describe('query strings', () => {
 			});
 		});
 	});
+
+	describe('queryString', () => {
+		function subsets<T>(arr: T[]): T[][] {
+			const result: T[][] = [];
+
+			const total = 1 << arr.length; // 2^n combinações
+
+			for (let mask = 1; mask < total; mask++) {
+				const subset: T[] = [];
+
+				for (let i = 0; i < arr.length; i++) {
+					if (mask & (1 << i)) {
+						subset.push(arr[i]);
+					}
+				}
+
+				result.push(subset);
+			}
+
+			return result;
+		}
+
+		const cases = subsets(['filter', 'sort', 'include', 'page', 'perPage']).map((subset): [string, string, string[]] => {
+			let parts: string[] = []
+
+			subset.forEach(element => {
+				switch (element) {
+					case 'filter':
+						parts.push('filter[name]=jhon');
+						break;
+					case 'sort':
+						parts.push('sort=name');
+						break;
+					case 'include':
+						parts.push('include=author');
+						break;
+					case 'page':
+						parts.push('page=2');
+						break;
+					case 'perPage':
+						parts.push('perPage=25');
+						break;
+				}
+			});
+
+			const expectedQueryString = parts.length ? '?' + parts.join('&') : '';
+
+			const subsetString = subset.join(',');
+			return [subsetString, expectedQueryString, subset]
+		});
+
+		it.each([
+			['', '', []],
+			...cases
+		])('when use "%s", should return %s', (_, expectedQueryString, subset) => {
+			const { result } = renderHook(() =>
+				useUrlQuery({
+					sorts: ["name"],
+				})
+			);
+
+			subset.forEach(element => {
+				switch (element) {
+					case 'filter':
+						act(() => {
+							result.current.filterBy('name', 'jhon');
+						});
+						break;
+					case 'sort':
+						act(() => {
+							result.current.toggleSortState('name');
+						});
+						break;
+					case 'include':
+						act(() => {
+							result.current.addInclude('author');
+						});
+						break;
+					case 'page':
+						act(() => {
+							result.current.setPage(2);
+						});
+						break;
+					case 'perPage':
+						act(() => {
+							result.current.setPerPage(25);
+						});
+						break;
+				}
+			});
+
+			expect(result.current.queryString).toBe(expectedQueryString);
+		});
+	});
 });
+
