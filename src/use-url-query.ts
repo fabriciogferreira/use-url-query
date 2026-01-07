@@ -17,10 +17,11 @@ type Params = {
 	sorts?: SortParam;
 }
 
+//FILTER
+//SORT
 type Sorts = Sort[];
 type SortString = string;
 type SortQueryString = string;
-type QueryString = string;
 type FindSort = (column: string) => Sort | undefined;
 type GoUpSort = (column: string) => true | undefined;
 type InternalGoUpSort = (sorts: Sort[], index: number) => Sort[];
@@ -33,26 +34,33 @@ type InternalToggleSortDirection = (sorts: Sort[], index: number) => Sort[];
 type ToggleDirectionSort = (column: string) => boolean | undefined;
 type SortIsAsc = (column: string) => boolean | undefined;
 type SortIsDesc = (column: string) => boolean | undefined;
+//INCLUDE
+type IncludeString = string;
+type IncludeQueryString = string;
+type AddInclude = (includes: string | string[]) => true;
+type RemInclude = (includes: string | string[]) => true;
+//FIELDS
+//PAGE
 type Page = number | null
 type setPage = Set<Page>;
 type PageString = string;
 type PageQueryString = string;
 type RemPage = () => true;
-type IncludeString = string;
-type IncludeQueryString = string;
-type AddInclude = (includes: string | string[]) => true;
-type RemInclude = (includes: string | string[]) => true;
+//PER PAGE
 type PerPage = number | null;
 type setPerPage = Set<PerPage>;
 type PerPageString = string;
 type PerPageQueryString = string;
 type RemPerPage = () => void;
+//QUERY STRING
+type QueryString = string;
 
 export type UseUrlQuery = (params: Params) => {
+	//FILTER
+	//SORT
 	sorts: Sorts;
 	sortString: SortString;
 	sortQueryString: SortQueryString;
-	queryString: QueryString;
 	// sortToEnd: Function;
 	// sortToBegin: Function;
 	goUpSort: GoUpSort
@@ -65,23 +73,26 @@ export type UseUrlQuery = (params: Params) => {
 	toggleDirectionSort: ToggleDirectionSort;
 	sortIsAsc: SortIsAsc;
 	sortIsDesc: SortIsDesc;
+	//INCLUDE
+	includeString: IncludeString;
+	includeQueryString: IncludeQueryString;
+	addInclude: AddInclude;
+	remInclude: RemInclude;
+	//FIELDS
 	//PAGE
 	page: Page;
 	setPage: setPage;
 	pageString: PageString;
 	pageQueryString: PageQueryString;
 	remPage: RemPage;
-	//INCLUDE
-	includeString: IncludeString;
-	includeQueryString: IncludeQueryString;
-	addInclude: AddInclude;
-	remInclude: RemInclude;
 	//PER PAGE
 	perPage: PerPage;
 	setPerPage: setPerPage;
 	perPageString: PerPageString;
 	perPageQueryString: PerPageQueryString;
 	remPerPage: RemPerPage;
+	//QUERY STRING
+	queryString: QueryString;
 }
 
 export type UseUrlQueryContext = ReturnType<UseUrlQuery>;
@@ -101,6 +112,7 @@ export const useUrlQuery: UseUrlQuery = ({
 		}
 	});
 
+	//SORT
 	const [sorts, setSorts] = useState<Sort[]>(normalizedSorts);
 
 	const sortString: SortString = useMemo(() => sorts.map(sort => sort.direction + sort.column)
@@ -109,10 +121,6 @@ export const useUrlQuery: UseUrlQuery = ({
 	const sortQueryString: SortQueryString = useMemo(() => {
 		return 'sort=' + sortString;
 	}, [sortString]);
-
-	const queryString: QueryString = useMemo(() => {
-		return '?' + sortQueryString;
-	}, [sortQueryString]);
 
 	const findSort: FindSort = (column: string) => {
 		return sorts.find(sort => sort.column === column);
@@ -227,22 +235,6 @@ export const useUrlQuery: UseUrlQuery = ({
 		return sort.direction === '-';
 	}
 
-	//PAGE
-	const [page, setPage] = useState<Page>(null);
-	
-	const pageString: PageString  = useMemo(() => {
-		return page ? page.toString() : '';
-	}, [page]);
-	
-	const pageQueryString: PageQueryString  = useMemo(() => {
-		return pageString ? 'page=' + pageString : '';
-	}, [pageString]);
-
-	const remPage: RemPage = () => {
-		setPage(null);
-		return true
-	}
-
 	//INCLUDE
 	const [includes, setIncludes] = useState<string[]>([]);
 
@@ -272,6 +264,24 @@ export const useUrlQuery: UseUrlQuery = ({
 		return true;
 	}
 
+	//FIELDS
+
+	//PAGE
+	const [page, setPage] = useState<Page>(null);
+	
+	const pageString: PageString  = useMemo(() => {
+		return page ? page.toString() : '';
+	}, [page]);
+	
+	const pageQueryString: PageQueryString  = useMemo(() => {
+		return pageString ? 'page=' + pageString : '';
+	}, [pageString]);
+
+	const remPage: RemPage = () => {
+		setPage(null);
+		return true
+	}
+
 	//PER PAGE
 	const [perPage, setPerPage] = useState<PerPage>(null);
 	
@@ -288,7 +298,13 @@ export const useUrlQuery: UseUrlQuery = ({
 		return true;
 	}
 
+	//QUERY STRING
+	const queryString: QueryString = useMemo(() => {
+		return '?' + sortQueryString;
+	}, [sortQueryString]);
+
 	return {
+		//FILTER
 		//SORT
 		sorts,
 		sortString,
@@ -311,18 +327,19 @@ export const useUrlQuery: UseUrlQuery = ({
 		toggleDirectionSort,
 		sortIsAsc,
 		sortIsDesc,
-		//PAGE
-		page,
-		setPage,
-		pageString,
-		pageQueryString,
-		remPage,
 		//INCLUDE
 		includes,
 		includeString,
 		includeQueryString,
 		addInclude,
 		remInclude,
+		//FIELDS
+		//PAGE
+		page,
+		setPage,
+		pageString,
+		pageQueryString,
+		remPage,
 		//PER PAGE
 		perPage,
 		setPerPage,
@@ -336,6 +353,8 @@ export const useUrlQuery: UseUrlQuery = ({
 
 /*
 FEATURES FUTURAS:
+- trocar sort para sorting onde faz sentido
+- Suporte a appends
 - Suporte a filtros
 - suporte a fields
 - normalização de valores vindos da URL
