@@ -9,12 +9,12 @@ import { renderHook, act } from "@testing-library/react";
 // 	funções
 // 	states
 // 	retorno
-const shouldReturnTrueWhenSuccessful = (returned: boolean | undefined)  => {
+const shouldReturnTrueWhenSuccessful = (returned: boolean | undefined) => {
 	it('should return true if successful', () => {
 		expect(returned).toBe(true);
 	});
 }
-const shouldReturnUndefinedWhenNotFound = (returned: boolean | undefined)  => {
+const shouldReturnUndefinedWhenNotFound = (returned: boolean | undefined) => {
 	it('should return undefined if not found', () => {
 		expect(returned).toBe(undefined);
 	});
@@ -53,34 +53,42 @@ describe('params', () => {
 });
 
 describe('sort', () => {
-	describe('goUpSort', () => {
-		const sorts = ['1', '2', '3', '4', '5'];
-		const cases: [string[], number, string[]][] = [
-			[sorts, 0, ['1', '2', '3', '4', '5']],
-			[sorts, 1, ['2', '1', '3', '4', '5']],
-			[sorts, 2, ['1', '3', '2', '4', '5']],
-			[sorts, 3, ['1', '2', '4', '3', '5']],
-			[sorts, 4, ['1', '2', '3', '5', '4']],
-		]
+	const sorts = ['1', '2', '3', '4', '5'];
 
-		it.each(cases)('when move index %i up, should return %s', (initialSorts, indexToMove, expectedSorts) => {
-			const { result } = renderHook(() =>
-				useUrlQuery({
-					sorts: initialSorts
-				})
-			);
+	describe.each([
+		[sorts, 0, ['1', '2', '3', '4', '5']],
+		[sorts, 1, ['2', '1', '3', '4', '5']],
+		[sorts, 2, ['1', '3', '2', '4', '5']],
+		[sorts, 3, ['1', '2', '4', '3', '5']],
+		[sorts, 4, ['1', '2', '3', '5', '4']],
+	])('goUpSort %i, %i', (initialSorts, indexToMove, expectedSorts) => {
+		const { result } = renderHook(() =>
+			useUrlQuery({
+				sorts: initialSorts
+			})
+		);
 
-			act(() => {
-				result.current.goUpSort(initialSorts[indexToMove]);
-			});
+		act(() => {
+			result.current.goUpSort(initialSorts[indexToMove]);
+		});
 
+		act(() => {
+			sorts.forEach(s => result.current.toggleSortState(s));
+		});
+
+		it('when move index %i up, should return %s', () => {
 			expect(result.current.sorts.map(s => s.column)).toEqual(expectedSorts);
 		});
 
-		//FEATURE TESTS
-		//when move index %i up, should update sortString
-		//when move index %i up, should update sortQueryString
-		
+		it('when move index %i up, should update sortString', () => {
+			expect(result.current.sortString).toBe(expectedSorts.join(','));
+		});
+
+		it('when move index %i up, should update sortQueryString', () => {
+			expect(result.current.sortQueryString).toBe('sort=' + expectedSorts.join(','));
+		});
+	});
+	describe('goUpSort', () => {
 		const { result: { current: urlQuery } } = renderHook(() =>
 			useUrlQuery({
 				sorts: ["asc", "desc", "name"]
