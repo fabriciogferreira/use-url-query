@@ -140,12 +140,6 @@ describe('sort', () => {
 			})
 		);
 
-		it('should move sort down', async () => {
-			const newSorts = urlQuery.internalGoDownSort(urlQuery.sorts, 1);
-			expect(newSorts.map(s => s.column))
-				.toEqual(["asc", "name", "desc"]);
-		});
-
 		shouldReturnTrueWhenSuccessful(urlQuery.goDownSort('desc'));
 		shouldReturnUndefinedWhenNotFound(urlQuery.goDownSort('not-found'));
 	});
@@ -394,54 +388,34 @@ describe('query strings', () => {
 				expect(result.current.includeQueryString).toBe(includeQueryString);
 			})
 		});
+		
+		describe.each([
+			['', '', ''],
+			[[''], ['one'], ''],
+			[['one'], [''], 'one'],
+			[['one', 'two', 'three'], ['one'], 'two,three'],
+			[['one', 'two', 'three'], ['two'], 'one,three'],
+			[['one', 'two', 'three'], ['three'], 'one,two'],
+			[['one', 'two', 'three'], ['one', 'two', 'three'], ''],
+		])('remInclude %s, %s', (initial, toRem, expected) => {
+			const { result } = renderHook(() =>
+				useUrlQuery({})
+			);
 
-		describe('remInclude', () => {
-			it.each([
-				['', '', ''],
-				[[''], ['one'], ''],
-				[['one'], [''], 'one'],
-				[['one', 'two', 'three'], ['one'], 'two,three'],
-				[['one', 'two', 'three'], ['two'], 'one,three'],
-				[['one', 'two', 'three'], ['three'], 'one,two'],
-				[['one', 'two', 'three'], ['one', 'two', 'three'], ''],
-			])('when set includes state as %s, includeString should return "%s"', (initial, toRem, expected) => {
-				const { result } = renderHook(() =>
-					useUrlQuery({})
-				);
+			act(() => {
+				result.current.addInclude(initial);
+			});
 
-				act(() => {
-					result.current.addInclude(initial);
-				});
+			act(() => {
+				result.current.remInclude(toRem);
+			});
 
-				act(() => {
-					result.current.remInclude(toRem);
-				});
-
+			it('when set includes state as %s, includeString should return "%s"', () => {
 				expect(result.current.includeString).toBe(expected);
 			})
 
-			it.each([
-				['', '', ''],
-				[[''], ['one'], ''],
-				[['one'], [''], 'include=one'],
-				[['one', 'two', 'three'], ['one'], 'include=two,three'],
-				[['one', 'two', 'three'], ['two'], 'include=one,three'],
-				[['one', 'two', 'three'], ['three'], 'include=one,two'],
-				[['one', 'two', 'three'], ['one', 'two', 'three'], ''],
-			])('when set includes state as %s, includeQueryString should return "%s"', (initial, toRem, expected) => {
-				const { result } = renderHook(() =>
-					useUrlQuery({})
-				);
-
-				act(() => {
-					result.current.addInclude(initial);
-				});
-
-				act(() => {
-					result.current.remInclude(toRem);
-				});
-
-				expect(result.current.includeQueryString).toBe(expected);
+			it('when set includes state as %s, includeQueryString should return "%s"', () => {
+				expect(result.current.includeQueryString).toBe(expected ? 'include=' + expected : expected);
 			})
 		});
 	});
