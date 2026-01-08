@@ -99,6 +99,40 @@ describe('sort', () => {
 		shouldReturnUndefinedWhenNotFound(urlQuery.goUpSort('not-found'));
 	});
 
+	describe.each([
+		[sorts, 0, ['2', '1', '3', '4', '5']],
+		[sorts, 1, ['1', '3', '2', '4', '5']],
+		[sorts, 2, ['1', '2', '4', '3', '5']],
+		[sorts, 3, ['1', '2', '3', '5', '4']],
+		[sorts, 4, ['1', '2', '3', '4', '5']],
+	])('goDownSort %i, %i', (initialSorts, indexToMove, expectedSorts) => {
+		const { result } = renderHook(() =>
+			useUrlQuery({
+				sorts: initialSorts
+			})
+		);
+
+		act(() => {
+			result.current.goDownSort(initialSorts[indexToMove]);
+		});
+
+		act(() => {
+			sorts.forEach(s => result.current.toggleSortState(s));
+		});
+
+		it('when move index %i up, should return %s', () => {
+			expect(result.current.sorts.map(s => s.column)).toEqual(expectedSorts);
+		});
+
+		it('when move index %i up, should update sortString', () => {
+			expect(result.current.sortString).toBe(expectedSorts.join(','));
+		});
+
+		it('when move index %i up, should update sortQueryString', () => {
+			expect(result.current.sortQueryString).toBe('sort=' + expectedSorts.join(','));
+		});
+	});
+
 	describe('goDownSort', () => {
 		const { result: { current: urlQuery } } = renderHook(() =>
 			useUrlQuery({
