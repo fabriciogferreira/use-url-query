@@ -2,6 +2,13 @@ import { useUrlQuery } from "../src/use-url-query";
 import { describe, expect, it } from "bun:test";
 import { renderHook, act } from "@testing-library/react";
 
+
+// useUrlQuery
+// 	params
+// 		obrigatoriedade do objetos params
+// 	funções
+// 	states
+// 	retorno
 const shouldReturnTrueWhenSuccessful = (returned: boolean | undefined)  => {
 	it('should return true if successful', () => {
 		expect(returned).toBe(true);
@@ -47,17 +54,38 @@ describe('params', () => {
 
 describe('sort', () => {
 	describe('goUpSort', () => {
+		const sorts = ['1', '2', '3', '4', '5'];
+		const cases: [string[], number, string[]][] = [
+			[sorts, 0, ['1', '2', '3', '4', '5']],
+			[sorts, 1, ['2', '1', '3', '4', '5']],
+			[sorts, 2, ['1', '3', '2', '4', '5']],
+			[sorts, 3, ['1', '2', '4', '3', '5']],
+			[sorts, 4, ['1', '2', '3', '5', '4']],
+		]
+
+		it.each(cases)('when move index %i up, should return %s', (initialSorts, indexToMove, expectedSorts) => {
+			const { result } = renderHook(() =>
+				useUrlQuery({
+					sorts: initialSorts
+				})
+			);
+
+			act(() => {
+				result.current.goUpSort(initialSorts[indexToMove]);
+			});
+
+			expect(result.current.sorts.map(s => s.column)).toEqual(expectedSorts);
+		});
+
+		//FEATURE TESTS
+		//when move index %i up, should update sortString
+		//when move index %i up, should update sortQueryString
+		
 		const { result: { current: urlQuery } } = renderHook(() =>
 			useUrlQuery({
 				sorts: ["asc", "desc", "name"]
 			})
 		);
-
-		it('should move sort up', async () => {
-			const newSorts = urlQuery.internalGoUpSort(urlQuery.sorts, 1);
-			expect(newSorts.map(s => s.column))
-				.toEqual(["desc", "asc", "name"]);
-		});
 
 		shouldReturnTrueWhenSuccessful(urlQuery.goUpSort('desc'));
 		shouldReturnUndefinedWhenNotFound(urlQuery.goUpSort('not-found'));
