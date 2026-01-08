@@ -1,8 +1,12 @@
-import { UseUrlQuery, useUrlQuery } from "../src/use-url-query";
-import { beforeAll, describe, expect, it } from "bun:test";
+import { useUrlQuery } from "../src/use-url-query";
+import { describe, expect, it } from "bun:test";
 import { renderHook, act } from "@testing-library/react";
 
-
+const shouldReturnTrueWhenSuccessful = (returned: boolean | undefined)  => {
+	it('should return true if successful', () => {
+		expect(returned).toBe(true);
+	});
+}
 const shouldReturnUndefinedWhenNotFound = (returned: boolean | undefined)  => {
 	it('should return undefined if not found', () => {
 		expect(returned).toBe(undefined);
@@ -55,10 +59,7 @@ describe('sort', () => {
 				.toEqual(["desc", "asc", "name"]);
 		});
 
-		it('should return true if successful', () => {
-			expect(urlQuery.goUpSort('desc')).toBe(true);
-		});
-
+		shouldReturnTrueWhenSuccessful(urlQuery.goUpSort('desc'));
 		shouldReturnUndefinedWhenNotFound(urlQuery.goUpSort('not-found'));
 	});
 
@@ -75,10 +76,7 @@ describe('sort', () => {
 				.toEqual(["asc", "name", "desc"]);
 		});
 
-		it('should return true if successful', () => {
-			expect(urlQuery.goDownSort('desc')).toBe(true);
-		});
-
+		shouldReturnTrueWhenSuccessful(urlQuery.goDownSort('desc'));
 		shouldReturnUndefinedWhenNotFound(urlQuery.goDownSort('not-found'));
 	});
 
@@ -192,26 +190,18 @@ describe('sort', () => {
 describe('include', () => {
 	describe('addInclude', () => {
 		const { result: { current: urlQuery } } = renderHook(() =>
-			useUrlQuery({
-				sorts: ["asc", "desc", "name"]
-			})
+			useUrlQuery({})
 		);
 
-		it('should return true if successful', () => {
-			expect(urlQuery.addInclude('desc')).toBe(true);
-		});
+		shouldReturnTrueWhenSuccessful(urlQuery.addInclude('desc'));
 	});
 
 	describe('remInclude', () => {
 		const { result: { current: urlQuery } } = renderHook(() =>
-			useUrlQuery({
-				sorts: ["asc", "desc", "name"]
-			})
+			useUrlQuery({})
 		);
 
-		it('should return true if successful', () => {
-			expect(urlQuery.addInclude('desc')).toBe(true);
-		});
+		shouldReturnTrueWhenSuccessful(urlQuery.remInclude('desc'));
 	});
 });
 
