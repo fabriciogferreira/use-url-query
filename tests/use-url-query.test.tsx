@@ -1,7 +1,13 @@
-import { useUrlQuery } from "../src/use-url-query";
+import { UseUrlQuery, useUrlQuery } from "../src/use-url-query";
 import { beforeAll, describe, expect, it } from "bun:test";
 import { renderHook, act } from "@testing-library/react";
 
+
+const shouldReturnUndefinedWhenNotFound = (returned: boolean | undefined)  => {
+	it('should return undefined if not found', () => {
+		expect(returned).toBe(undefined);
+	});
+}
 describe('params', () => {
 	describe('sorts', () => {
 		it('should initialize sorts correctly without label', () => {
@@ -49,13 +55,11 @@ describe('sort', () => {
 				.toEqual(["desc", "asc", "name"]);
 		});
 
-		it('should return undefined if not found', () => {
-			expect(urlQuery.goUpSort('not-found')).toBe(undefined);
-		});
-
 		it('should return true if successful', () => {
 			expect(urlQuery.goUpSort('desc')).toBe(true);
 		});
+
+		shouldReturnUndefinedWhenNotFound(urlQuery.goUpSort('not-found'));
 	});
 
 	describe('goDownSort', () => {
@@ -71,13 +75,11 @@ describe('sort', () => {
 				.toEqual(["asc", "name", "desc"]);
 		});
 
-		it('should return undefined if not found', () => {
-			expect(urlQuery.goDownSort('not-found')).toBe(undefined);
-		});
-
 		it('should return true if successful', () => {
 			expect(urlQuery.goDownSort('desc')).toBe(true);
 		});
+
+		shouldReturnUndefinedWhenNotFound(urlQuery.goDownSort('not-found'));
 	});
 
 	describe('hasSort', () => {
@@ -111,13 +113,11 @@ describe('sort', () => {
 			expect(sort?.include).toBe(true);
 		});
 
-		it('should return undefined if not found', () => {
-			expect(urlQuery.toggleDirectionSort('not-found')).toBe(undefined);
-		});
-
 		it('should return true if successful', () => {
 			expect(urlQuery.toggleDirectionSort('asc')).toBe(true);
 		});
+
+		shouldReturnUndefinedWhenNotFound(urlQuery.toggleDirectionSort('not-found'));
 	});
 
 	describe('toggleDirectionSort', () => {
@@ -141,13 +141,11 @@ describe('sort', () => {
 			expect(sort?.direction).toBe('');
 		});
 
-		it('should return undefined if not found', () => {
-			expect(urlQuery.toggleDirectionSort('not-found')).toBe(undefined);
-		});
-
 		it('should return true if successful', () => {
 			expect(urlQuery.toggleDirectionSort('asc')).toBe(true);
 		});
+
+		shouldReturnUndefinedWhenNotFound(urlQuery.toggleDirectionSort('not-found'));
 	});
 
 	describe('sortIsAsc', () => {
@@ -167,9 +165,7 @@ describe('sort', () => {
 			expect(urlQuery.sortIsAsc('desc')).toBe(false);
 		});
 
-		it('should return undefined if not found', () => {
-			expect(urlQuery.sortIsAsc('not-found')).toBe(undefined);
-		});
+		shouldReturnUndefinedWhenNotFound(urlQuery.sortIsAsc('not-found'));
 	});
 
 	describe('sortIsDesc', () => {
@@ -189,9 +185,7 @@ describe('sort', () => {
 			expect(urlQuery.sortIsDesc('desc')).toBe(true);
 		});
 
-		it('should return undefined if not found', () => {
-			expect(urlQuery.sortIsDesc('not-found')).toBe(undefined);
-		});
+		shouldReturnUndefinedWhenNotFound(urlQuery.sortIsDesc('not-found'));
 	});
 })
 
