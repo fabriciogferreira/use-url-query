@@ -331,7 +331,7 @@ export const useUrlQuery: UseUrlQuery = ({
 	}, [filterQueryString, sortQueryString, includeQueryString, pageQueryString, perPageQueryString]);
 
 	//LIFECYCLE
-		useEffect(() => {
+	useEffect(() => {
 		if (!normalizeFromUrl) return;
 
 		const searchParams = useSearchParams();

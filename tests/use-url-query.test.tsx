@@ -153,12 +153,13 @@ describe('params', () => {
 
 					const validSortings: Sort[] = Object.entries(sorts).map(([key, value]) => {
 						return ({
-						column: key,
-						label: key,
-						direction: value as '' | '-',
-						include: true
-					})});
-					
+							column: key,
+							label: key,
+							direction: value as '' | '-',
+							include: true
+						})
+					});
+
 					expect(result.current.sorts.filter(sort => sort.include)).toEqual(validSortings);
 				});
 			});
