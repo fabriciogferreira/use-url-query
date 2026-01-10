@@ -59,7 +59,7 @@ type RemPerPage = () => void;
 //QUERY STRING
 type QueryString = string;
 
-export type UseUrlQuery = (params: Params) => {
+export type UseUrlQuery = (params?: Params) => {
 	//FILTER
 	filters: Filters;
 	filterQueryString: FilterQueryString;
@@ -107,7 +107,8 @@ export type UseUrlQueryContext = ReturnType<UseUrlQuery>;
 export const useUrlQuery: UseUrlQuery = ({
 	sorts: initialSorts = [],
 	normalizeFromUrl = true,
-}) => {
+} = {}) => {
+	//LIFECYCLE INIT
 	const normalizedSorts: Sort[] = initialSorts.map(Parasort => {
 		const restItem = typeof Parasort === 'string'
 			? { column: Parasort, label: Parasort }
@@ -122,63 +123,6 @@ export const useUrlQuery: UseUrlQuery = ({
 
 	//FILTER
 	const [filters, setFilters] = useState<Filters>({});
-
-	useEffect(() => {
-		if (!normalizeFromUrl) return;
-
-		const searchParams = useSearchParams();
-
-		if (searchParams == undefined) return
-
-		const newFilters: Record<string, string> = {};
-
-		searchParams.forEach((value, key) => {
-			const filterMatch = key.match(/^filter\[(.+)\]$/);
-
-			if (filterMatch) {
-				const column = filterMatch[1];
-
-				newFilters[column] = value;
-
-				return
-			}
-
-			const sortMatch = key.match(/^sort$/);
-
-			if (sortMatch) {
-				const sortings = value.split(',');
-
-				const orderingMap = new Map<string, number>();
-
-				sortings.forEach((sorting, index) => {
-					const column = sorting.replace(/^-/, '');
-					orderingMap.set(column, index);
-					//TODO: melhorar, ao invés de editar cada propriedade por vez, criar um função que altere vários propriedades de uma vez ou melhor que altere várias propriedades de uma vez de vários items
-					if (sorting.startsWith('-')) {
-						toggleDirectionSort(column);
-					}
-					toggleSortState(column);
-				});
-
-				setSorts(prev =>
-					[...prev].sort((a, b) => {
-						const aIndex = orderingMap.get(a.column);
-						const bIndex = orderingMap.get(b.column);
-
-						if (aIndex === undefined && bIndex === undefined) return 0;
-						if (aIndex === undefined) return 1;
-						if (bIndex === undefined) return -1;
-
-						return aIndex - bIndex;
-					})
-				);
-
-				return
-			}
-		});
-
-		setFilters(newFilters)
-	}, [normalizeFromUrl])
 
 	const filterQueryString: FilterQueryString = useMemo(() => Object.entries(filters)
 		.map(([key, value]) => `filter[${key}]=${value}`
@@ -386,6 +330,64 @@ export const useUrlQuery: UseUrlQuery = ({
 		return parts.length ? '?' + parts.join('&') : '';
 	}, [filterQueryString, sortQueryString, includeQueryString, pageQueryString, perPageQueryString]);
 
+	//LIFECYCLE
+		useEffect(() => {
+		if (!normalizeFromUrl) return;
+
+		const searchParams = useSearchParams();
+
+		if (searchParams == undefined) return
+
+		const newFilters: Record<string, string> = {};
+
+		searchParams.forEach((value, key) => {
+			const filterMatch = key.match(/^filter\[(.+)\]$/);
+
+			if (filterMatch) {
+				const column = filterMatch[1];
+
+				newFilters[column] = value;
+
+				return
+			}
+
+			const sortMatch = key.match(/^sort$/);
+
+			if (sortMatch) {
+				const sortings = value.split(',');
+
+				const orderingMap = new Map<string, number>();
+
+				sortings.forEach((sorting, index) => {
+					const column = sorting.replace(/^-/, '');
+					orderingMap.set(column, index);
+					//TODO: melhorar, ao invés de editar cada propriedade por vez, criar um função que altere vários propriedades de uma vez ou melhor que altere várias propriedades de uma vez de vários items
+					if (sorting.startsWith('-')) {
+						toggleDirectionSort(column);
+					}
+					toggleSortState(column);
+				});
+
+				setSorts(prev =>
+					[...prev].sort((a, b) => {
+						const aIndex = orderingMap.get(a.column);
+						const bIndex = orderingMap.get(b.column);
+
+						if (aIndex === undefined && bIndex === undefined) return 0;
+						if (aIndex === undefined) return 1;
+						if (bIndex === undefined) return -1;
+
+						return aIndex - bIndex;
+					})
+				);
+
+				return
+			}
+		});
+
+		setFilters(newFilters)
+	}, [normalizeFromUrl])
+
 	return {
 		//FILTER
 		filters,
@@ -449,7 +451,6 @@ FEATURES FUTURAS:
 - tests podem ser melhoradods, no goUpSort ele deve rodar todos os tests para cada data set: column = p0 column = n !== 0
 - Implementar testes para usestatee
 - permitir configuração de delimitadores para include, appends, fields, sorts, filters
-
 - permitir alterar os nomes dos parâmetros: sort, include, append, fields, page, perPage, filter, exemplo sortAs: string, 
 	//STRING, NUMBER, BOOLEAN, ARRAY, NULL=''
 	// EQUAL, NOT_EQUAL, GREATER_THAN, LESS_THAN, GREATER_THAN_OR_EQUAL, LESS_THAN_OR_EQUAL, and DYNAMIC

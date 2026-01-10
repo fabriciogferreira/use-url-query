@@ -398,7 +398,7 @@ describe('sort', () => {
 describe('include', () => {
 	describe('addInclude', () => {
 		const { result: { current: urlQuery } } = renderHook(() =>
-			useUrlQuery({})
+			useUrlQuery()
 		);
 
 		shouldReturnTrueWhenSuccessful(urlQuery.addInclude('desc'));
@@ -406,7 +406,7 @@ describe('include', () => {
 
 	describe('remInclude', () => {
 		const { result: { current: urlQuery } } = renderHook(() =>
-			useUrlQuery({})
+			useUrlQuery()
 		);
 
 		shouldReturnTrueWhenSuccessful(urlQuery.remInclude('desc'));
@@ -420,7 +420,7 @@ describe('page', () => {
 		[5, 5],
 	])('when set page state as %i, page state should return "%s"', (page, state) => {
 		const { result } = renderHook(() =>
-			useUrlQuery({})
+			useUrlQuery()
 		);
 
 		act(() => {
@@ -432,7 +432,7 @@ describe('page', () => {
 
 	it("remPage", () => {
 		const { result } = renderHook(() =>
-			useUrlQuery({})
+			useUrlQuery()
 		);
 
 		act(() => {
@@ -450,7 +450,7 @@ describe('perPage', () => {
 		[25, 25],
 	])('when set perPage state as %i, perPage state should return "%s"', (perPage, state) => {
 		const { result } = renderHook(() =>
-			useUrlQuery({})
+			useUrlQuery()
 		);
 
 		act(() => {
@@ -462,7 +462,7 @@ describe('perPage', () => {
 
 	it("remPerPage", () => {
 		const { result } = renderHook(() =>
-			useUrlQuery({})
+			useUrlQuery()
 		);
 
 		act(() => {
@@ -506,7 +506,7 @@ describe('query strings', () => {
 				// [['author', 'comments'], 'author,comments'],
 			])('when set includes state as %s, includeString should return "%s"', (includes, includeString) => {
 				const { result } = renderHook(() =>
-					useUrlQuery({})
+					useUrlQuery()
 				);
 
 				act(() => {
@@ -522,7 +522,7 @@ describe('query strings', () => {
 				[['author', 'comments'], 'include=author,comments'],
 			])('when set includes state as %s, includeQueryString should return "%s"', (includes, includeQueryString) => {
 				const { result } = renderHook(() =>
-					useUrlQuery({})
+					useUrlQuery()
 				);
 
 				act(() => {
@@ -543,7 +543,7 @@ describe('query strings', () => {
 			[['one', 'two', 'three'], ['one', 'two', 'three'], ''],
 		])('remInclude %s, %s', (initial, toRem, expected) => {
 			const { result } = renderHook(() =>
-				useUrlQuery({})
+				useUrlQuery()
 			);
 
 			act(() => {
@@ -572,7 +572,7 @@ describe('query strings', () => {
 				[5, '5'],
 			])('page=%i should return string "%s"', (page, pageString) => {
 				const { result } = renderHook(() =>
-					useUrlQuery({})
+					useUrlQuery()
 				);
 
 				act(() => {
@@ -590,7 +590,7 @@ describe('query strings', () => {
 				[5, 'page=5'],
 			])('page=%i should return query string "%s"', (page, pageQueryString) => {
 				const { result } = renderHook(() =>
-					useUrlQuery({})
+					useUrlQuery()
 				);
 
 				act(() => {
@@ -610,7 +610,7 @@ describe('query strings', () => {
 				[25, '25'],
 			])('perPage=%i should return string "%s"', (perPage, perPageString) => {
 				const { result } = renderHook(() =>
-					useUrlQuery({})
+					useUrlQuery()
 				);
 
 				act(() => {
@@ -628,7 +628,7 @@ describe('query strings', () => {
 				[25, 'perPage=25'],
 			])('perPage=%i should return query string "%s"', (perPage, perPageQueryString) => {
 				const { result } = renderHook(() =>
-					useUrlQuery({})
+					useUrlQuery()
 				);
 
 				act(() => {
