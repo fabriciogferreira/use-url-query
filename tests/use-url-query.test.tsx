@@ -1,6 +1,12 @@
-import { useUrlQuery } from "../src/use-url-query";
+import { Sort, useUrlQuery } from "../src/use-url-query";
 import { describe, expect, it, mock } from "bun:test";
 import { renderHook, act } from "@testing-library/react";
+import fastCartesian from 'fast-cartesian'
+import { Permutation, PowerSet, } from 'js-combinatorics';
+//Criar função que gere todas as combinações possíveis de sorts com essas configurações:
+// ordem importa? &
+// (size | min | max | min & max) ?
+// includeVoid? 
 
 let mockedSearchParams: URLSearchParams;
 
@@ -58,27 +64,105 @@ describe('params', () => {
 	describe('normalizeFromUrl', () => {
 		const filters = [['string', 'a'], ['number', '1'], ['boolean', 'true'], ['array', 'a,b,c'], ['null', '']]
 
-		const cases: [string, string[][]][] = subsets(filters).map((subset) => [subset.map(subsubset => subsubset.join('=')).join('&'), subset]);
+		describe('filters', () => {
+			const cases: [string, string[][]][] = subsets(filters).map((subset) => [subset.map(subsubset => subsubset.join('=')).join('&'), subset]);
 
-		it.each(cases)('when query string is %s', (_, params: string[][]) => {
-			const queryString = params.map(([key, value]) => `filter[${key}]=${value}`).join('&');
+			it.each(cases)('when query string is %s', (_, params: string[][]) => {
+				const queryString = params.map(([key, value]) => `filter[${key}]=${value}`).join('&');
 
-			mockedSearchParams = new URLSearchParams(queryString);
+				mockedSearchParams = new URLSearchParams(queryString);
 
-			let expectedFilters: Record<string, string> = {};
+				let expectedFilters: Record<string, string> = {};
 
-			params.forEach(([key, value]) => {
-				expectedFilters[key] = value;
-			})
-
-			const { result } = renderHook(() =>
-				useUrlQuery({
-					normalizeFromUrl: true,
+				params.forEach(([key, value]) => {
+					expectedFilters[key] = value;
 				})
-			);
 
-			expect(result.current.filters).toEqual(expectedFilters);
-		})
+				const { result } = renderHook(() =>
+					useUrlQuery({
+						normalizeFromUrl: true,
+					})
+				);
+
+				expect(result.current.filters).toEqual(expectedFilters);
+			})
+		});
+
+		describe('sorts', () => {
+
+			const powerSets = [...new PowerSet('abcde')]
+
+			const cases: [string, string[]][] = powerSets.map(powerSet => [powerSet.join(','), powerSet])
+
+			//TODO: testar combinações com direções
+			describe.each(cases)('when query string has %s sorts', (queryString, sortings: string[]) => {
+				it('should change state include sorting from ' + queryString, () => {
+					mockedSearchParams = new URLSearchParams(`sort=${queryString}`);
+
+					const { result } = renderHook(() =>
+						useUrlQuery({
+							normalizeFromUrl: true,
+							sorts: ["a", "b", "c"]
+						})
+					);
+
+					const validSortings = sortings.filter(param => ["a", "b", "c"].includes(param));
+
+					const expectedSorts: Sort[] = validSortings.map(param => {
+						return {
+							column: param,
+							label: param,
+							direction: '',
+							include: true
+						}
+					});
+
+					expect(result.current.sorts.filter(sort => sort.include)).toEqual(expectedSorts);
+				})
+
+				const sortingsWithDirection = sortings.map(sorting => fastCartesian([['', '-'], [sorting]]))
+
+				const teste = fastCartesian(sortingsWithDirection);
+
+				const permuted = teste.flatMap(group =>
+					[...new Permutation(group)]
+				);
+
+				const cases2: [string, string[][]][] = permuted.map(permutation => [permutation.map(sort => sort.filter(Boolean).join('')).join(','), permutation]);
+
+				it.each([
+					['', []],
+					...cases2
+				])('should fix the order of sorts from query string when sort is %s', (queryString, sortings) => {
+					mockedSearchParams = new URLSearchParams(`sort=${queryString}`);
+
+					const sorts: Record<string, string> = {};
+
+					sortings.flatMap(sort => {
+						if (["a", "b", "c"].includes(sort[1])) {
+							sorts[sort[1]] = sort[0];
+						}
+					});
+
+					const { result } = renderHook(() =>
+						useUrlQuery({
+							normalizeFromUrl: true,
+							sorts: ["a", "b", "c"]
+						})
+					);
+
+					const validSortings: Sort[] = Object.entries(sorts).map(([key, value]) => {
+						return ({
+						column: key,
+						label: key,
+						direction: value as '' | '-',
+						include: true
+					})});
+					
+					expect(result.current.sorts.filter(sort => sort.include)).toEqual(validSortings);
+				});
+			});
+		});
 	});
 	describe('sorts', () => {
 		it('should initialize sorts correctly without label', () => {

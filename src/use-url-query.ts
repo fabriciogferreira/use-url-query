@@ -4,7 +4,7 @@ type Set<T> = Dispatch<SetStateAction<T>>
 
 type Direction = '-' | ''
 
-type Sort = {
+export type Sort = {
 	column: string;
 	label: string;
 	direction: Direction;
@@ -128,6 +128,8 @@ export const useUrlQuery: UseUrlQuery = ({
 
 		const searchParams = useSearchParams();
 
+		if (searchParams == undefined) return
+
 		const newFilters: Record<string, string> = {};
 
 		searchParams.forEach((value, key) => {
@@ -137,6 +139,41 @@ export const useUrlQuery: UseUrlQuery = ({
 				const column = filterMatch[1];
 
 				newFilters[column] = value;
+
+				return
+			}
+
+			const sortMatch = key.match(/^sort$/);
+
+			if (sortMatch) {
+				const sortings = value.split(',');
+
+				const orderingMap = new Map<string, number>();
+
+				sortings.forEach((sorting, index) => {
+					const column = sorting.replace(/^-/, '');
+					orderingMap.set(column, index);
+					//TODO: melhorar, ao invés de editar cada propriedade por vez, criar um função que altere vários propriedades de uma vez ou melhor que altere várias propriedades de uma vez de vários items
+					if (sorting.startsWith('-')) {
+						toggleDirectionSort(column);
+					}
+					toggleSortState(column);
+				});
+
+				setSorts(prev =>
+					[...prev].sort((a, b) => {
+						const aIndex = orderingMap.get(a.column);
+						const bIndex = orderingMap.get(b.column);
+
+						if (aIndex === undefined && bIndex === undefined) return 0;
+						if (aIndex === undefined) return 1;
+						if (bIndex === undefined) return -1;
+
+						return aIndex - bIndex;
+					})
+				);
+
+				return
 			}
 		});
 
