@@ -1,5 +1,5 @@
-import { useMemo, useState, Dispatch, SetStateAction } from "react"
-
+import { useMemo, useState, Dispatch, SetStateAction, useEffect } from "react"
+import { useSearchParams } from "next/navigation";
 type Set<T> = Dispatch<SetStateAction<T>>
 
 type Direction = '-' | ''
@@ -15,6 +15,7 @@ type SortParam = Pick<Sort, 'column' | 'label'>[] | Sort['column'][]
 
 type Params = {
 	sorts?: SortParam;
+	normalizeFromUrl?: boolean;
 }
 
 //FILTER
@@ -104,7 +105,8 @@ export type UseUrlQuery = (params: Params) => {
 export type UseUrlQueryContext = ReturnType<UseUrlQuery>;
 
 export const useUrlQuery: UseUrlQuery = ({
-	sorts: initialSorts = []
+	sorts: initialSorts = [],
+	normalizeFromUrl = true,
 }) => {
 	const normalizedSorts: Sort[] = initialSorts.map(Parasort => {
 		const restItem = typeof Parasort === 'string'
@@ -120,6 +122,26 @@ export const useUrlQuery: UseUrlQuery = ({
 
 	//FILTER
 	const [filters, setFilters] = useState<Filters>({});
+
+	useEffect(() => {
+		if (!normalizeFromUrl) return;
+
+		const searchParams = useSearchParams();
+
+		const newFilters: Record<string, string> = {};
+
+		searchParams.forEach((value, key) => {
+			const filterMatch = key.match(/^filter\[(.+)\]$/);
+
+			if (filterMatch) {
+				const column = filterMatch[1];
+
+				newFilters[column] = value;
+			}
+		});
+
+		setFilters(newFilters)
+	}, [normalizeFromUrl])
 
 	const filterQueryString: FilterQueryString = useMemo(() => Object.entries(filters)
 		.map(([key, value]) => `filter[${key}]=${value}`

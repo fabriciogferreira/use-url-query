@@ -1,7 +1,32 @@
 import { useUrlQuery } from "../src/use-url-query";
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it, mock } from "bun:test";
 import { renderHook, act } from "@testing-library/react";
 
+let mockedSearchParams: URLSearchParams;
+
+mock.module("next/navigation", () => ({
+	useSearchParams: () => mockedSearchParams,
+}));
+
+function subsets<T>(arr: T[]): T[][] {
+	const result: T[][] = [];
+
+	const total = 1 << arr.length; // 2^n combinações
+
+	for (let mask = 1; mask < total; mask++) {
+		const subset: T[] = [];
+
+		for (let i = 0; i < arr.length; i++) {
+			if (mask & (1 << i)) {
+				subset.push(arr[i]);
+			}
+		}
+
+		result.push(subset);
+	}
+
+	return result;
+}
 
 // useUrlQuery
 // 	params
@@ -19,7 +44,42 @@ const shouldReturnUndefinedWhenNotFound = (returned: boolean | undefined) => {
 		expect(returned).toBe(undefined);
 	});
 }
+
+//Regras globais para filtros:
+//Nem sempre um filtro estará presente na URL, ou seja, todos os filtros são opcionais
+
+
+//Regras
+//Obrigar ele a passar todas as propriedades como opcionais
+
+// TESTES FUTUROS
+//E SE EU PASSAR FILTROS DUPLICADOS?
 describe('params', () => {
+	describe('normalizeFromUrl', () => {
+		const filters = [['string', 'a'], ['number', '1'], ['boolean', 'true'], ['array', 'a,b,c'], ['null', '']]
+
+		const cases: [string, string[][]][] = subsets(filters).map((subset) => [subset.map(subsubset => subsubset.join('=')).join('&'), subset]);
+
+		it.each(cases)('when query string is %s', (_, params: string[][]) => {
+			const queryString = params.map(([key, value]) => `filter[${key}]=${value}`).join('&');
+
+			mockedSearchParams = new URLSearchParams(queryString);
+
+			let expectedFilters: Record<string, string> = {};
+
+			params.forEach(([key, value]) => {
+				expectedFilters[key] = value;
+			})
+
+			const { result } = renderHook(() =>
+				useUrlQuery({
+					normalizeFromUrl: true,
+				})
+			);
+
+			expect(result.current.filters).toEqual(expectedFilters);
+		})
+	});
 	describe('sorts', () => {
 		it('should initialize sorts correctly without label', () => {
 			const { result: { current: urlQuery } } = renderHook(() =>
@@ -388,7 +448,7 @@ describe('query strings', () => {
 				expect(result.current.includeQueryString).toBe(includeQueryString);
 			})
 		});
-		
+
 		describe.each([
 			['', '', ''],
 			[[''], ['one'], ''],
@@ -497,26 +557,6 @@ describe('query strings', () => {
 	});
 
 	describe('queryString', () => {
-		function subsets<T>(arr: T[]): T[][] {
-			const result: T[][] = [];
-
-			const total = 1 << arr.length; // 2^n combinações
-
-			for (let mask = 1; mask < total; mask++) {
-				const subset: T[] = [];
-
-				for (let i = 0; i < arr.length; i++) {
-					if (mask & (1 << i)) {
-						subset.push(arr[i]);
-					}
-				}
-
-				result.push(subset);
-			}
-
-			return result;
-		}
-
 		const cases = subsets(['filter', 'sort', 'include', 'page', 'perPage']).map((subset): [string, string, string[]] => {
 			let parts: string[] = []
 
