@@ -305,7 +305,7 @@ describe('sort', () => {
 		});
 	});
 
-	describe('internalToggleSortState', () => {
+	describe('toggleSort', () => {
 		const { result: { current: urlQuery } } = renderHook(() =>
 			useUrlQuery({
 				sorts: ["asc", "desc"]
@@ -313,9 +313,11 @@ describe('sort', () => {
 		);
 
 		it('should toggle include state', () => {
-			const newSorts = urlQuery.internalToggleSortState(urlQuery.sorts, 'asc');
+			act(() => {
+				urlQuery.toggleSort('asc');
+			})
 
-			const sort = newSorts.find(s => s.column === 'asc');
+			const sort = urlQuery.sorts.find(s => s.column === 'asc');
 
 			expect(sort?.include).toBe(true);
 		});

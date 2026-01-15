@@ -28,13 +28,9 @@ type SortString = string;
 type SortQueryString = string;
 type FindSort = (column: string) => Sort | undefined;
 type GoUpSort = (column: string) => true | undefined;
-type InternalGoUpSort = (sorts: Sort[], index: number) => Sort[];
 type GoDownSort = (column: string) => boolean | undefined;
-type InternalGoDownSort = (sorts: Sort[], index: number) => Sort[];
 type HasSort = (column: string) => boolean | undefined;
-type InternalToggleSortState = (sorts: Sort[], column: string) => Sort[];
 type ToggleSort = (column: string) => boolean | undefined;
-type InternalToggleSortDirection = (sorts: Sort[], index: number) => Sort[];
 type ToggleDirectionSort = (column: string) => boolean | undefined;
 type SortIsAsc = (column: string) => boolean | undefined;
 type SortIsDesc = (column: string) => boolean | undefined;
@@ -71,11 +67,8 @@ export type UseUrlQuery = (params?: Params) => {
 	// sortToEnd: Function;
 	// sortToBegin: Function;
 	goUpSort: GoUpSort
-	internalGoUpSort: InternalGoUpSort;
 	goDownSort: GoDownSort;
-	internalGoDownSort: InternalGoDownSort;
 	hasSort: HasSort;
-	internalToggleSortState: InternalToggleSortState;
 	toggleSort: ToggleSort;
 	toggleDirectionSort: ToggleDirectionSort;
 	sortIsAsc: SortIsAsc;
@@ -153,7 +146,13 @@ export const useUrlQuery: UseUrlQuery = ({
 	}
 	// function sortToEnd() { };
 	// function sortToBegin() { };
-	const internalGoUpSort: InternalGoUpSort = (sorts: Sort[], index: number): Sort[] => {
+	const goUpSort: GoUpSort = (column: string) => {
+		let index = sorts.findIndex(sort => sort.column === column);
+
+		if (index < 0) return undefined;
+
+		if (index === 0) return true;
+
 		const newSorts = [...sorts];
 
 		if (index >= 1) {
@@ -163,20 +162,18 @@ export const useUrlQuery: UseUrlQuery = ({
 			index = to;
 		}
 
-		return newSorts;
-	}
-	const goUpSort: GoUpSort = (column: string) => {
+		setSorts(newSorts)
+
+		return true;
+	};
+
+	const goDownSort: GoDownSort = (column: string) => {
 		let index = sorts.findIndex(sort => sort.column === column);
 
 		if (index < 0) return undefined;
 
-		if (index === 0) return true;
+		if (index === sorts.length - 1) return true;
 
-		setSorts(internalGoUpSort(sorts, index));
-
-		return true;
-	};
-	const internalGoDownSort: InternalGoDownSort = (sorts: Sort[], index: number): Sort[] => {
 		const newSorts = [...sorts];
 
 		if (index < sorts.length - 1) {
@@ -186,16 +183,7 @@ export const useUrlQuery: UseUrlQuery = ({
 			index = to;
 		}
 
-		return newSorts;
-	}
-	const goDownSort: GoDownSort = (column: string) => {
-		let index = sorts.findIndex(sort => sort.column === column);
-
-		if (index < 0) return undefined;
-
-		if (index === sorts.length - 1) return true;
-
-		setSorts(internalGoDownSort(sorts, index));
+		setSorts(newSorts)
 
 		return true;
 	}
@@ -204,21 +192,17 @@ export const useUrlQuery: UseUrlQuery = ({
 	const hasSort: HasSort = (column: string) => {
 		return findSort(column) !== undefined;
 	};
-	const internalToggleSortState: InternalToggleSortState = (sorts: Sort[], column: string) => {
-		const newSorts = [...sorts];
 
-		const index = newSorts.findIndex(sort => sort.column === column);
-
-		newSorts[index].include = !newSorts[index].include;
-
-		return newSorts;
-	}
 	const toggleSort: ToggleSort = (column: string) => {
 		const sort = findSort(column);
 
 		if (sort === undefined) return sort
 
-		const newSorts = internalToggleSortState(sorts, column);
+		const newSorts = [...sorts];
+
+		const index = newSorts.findIndex(sort => sort.column === column);
+
+		newSorts[index].include = !newSorts[index].include;
 
 		setSorts(newSorts);
 
@@ -228,19 +212,14 @@ export const useUrlQuery: UseUrlQuery = ({
 	// function enableSort() { }
 	// function disableSorts() { };
 	// function enableSorts() { }
-	const internalToggleSortDirection: InternalToggleSortDirection = (sorts: Sort[], index: number) => {
-		const newSorts = [...sorts];
-
-		newSorts[index].direction = newSorts[index].direction === '' ? '-' : '';
-
-		return newSorts;
-	}
 	const toggleDirectionSort: ToggleDirectionSort = (column: string) => {
 		const index = sorts.findIndex(s => s.column === column);
 
 		if (index === -1) return undefined
 
-		const newSorts = internalToggleSortDirection(sorts, index);
+		const newSorts = [...sorts];
+
+		newSorts[index].direction = newSorts[index].direction === '' ? '-' : '';
 
 		setSorts(newSorts);
 
@@ -399,14 +378,11 @@ export const useUrlQuery: UseUrlQuery = ({
 		sortQueryString,
 		// sortToEnd,
 		// sortToBegin,
-		internalGoUpSort,
 		goUpSort,
-		internalGoDownSort,
 		goDownSort,
 		// swapSorts,
 		// moveSortTo,
 		hasSort,
-		internalToggleSortState,
 		toggleSort,
 		// disableSort,
 		// enableSort,
