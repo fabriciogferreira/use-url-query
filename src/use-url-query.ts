@@ -117,7 +117,7 @@ export const useUrlQuery: UseUrlQuery = ({
 	//FILTER
 	const [filters, setFilters] = useState<Filters>({});
 
-	const filtersQueryString: FiltersQueryString = useMemo(() => Object.entries(filters)
+	const filtersQueryString = useMemo(() => Object.entries(filters)
 		.map(([key, value]) => `filter[${key}]=${value}`
 		)
 		.join(','), [filters]);
@@ -134,10 +134,10 @@ export const useUrlQuery: UseUrlQuery = ({
 	//SORT
 	const [sorts, setSorts] = useState<Sort[]>(normalizedSorts);
 
-	const sortString: SortString = useMemo(() => sorts.filter(sort => sort.include).map(sort => sort.direction + sort.column)
+	const sortString = useMemo(() => sorts.filter(sort => sort.include).map(sort => sort.direction + sort.column)
 		.join(','), [sorts]);
 
-	const sortQueryString: SortQueryString = useMemo(() => {
+	const sortQueryString = useMemo(() => {
 		return sortString ? 'sort=' + sortString : '';
 	}, [sortString]);
 
@@ -242,11 +242,11 @@ export const useUrlQuery: UseUrlQuery = ({
 	//INCLUDE
 	const [includes, setIncludes] = useState<string[]>([]);
 
-	const includeString: IncludeString = useMemo(() => {
+	const includeString = useMemo(() => {
 		return includes.join(',');
 	}, [includes]);
 
-	const includeQueryString: IncludeQueryString = useMemo(() => {
+	const includeQueryString = useMemo(() => {
 		return includeString ? 'include=' + includeString : '';
 	}, [includeString]);
 
@@ -273,11 +273,11 @@ export const useUrlQuery: UseUrlQuery = ({
 	//PAGE
 	const [page, setPage] = useState<Page>(null);
 
-	const pageString: PageString = useMemo(() => {
+	const pageString = useMemo(() => {
 		return page ? page.toString() : '';
 	}, [page]);
 
-	const pageQueryString: PageQueryString = useMemo(() => {
+	const pageQueryString = useMemo(() => {
 		return pageString ? 'page=' + pageString : '';
 	}, [pageString]);
 
@@ -289,11 +289,11 @@ export const useUrlQuery: UseUrlQuery = ({
 	//PER PAGE
 	const [perPage, setPerPage] = useState<PerPage>(null);
 
-	const perPageString: PerPageString = useMemo(() => {
+	const perPageString = useMemo(() => {
 		return perPage ? perPage.toString() : '';
 	}, [perPage]);
 
-	const perPageQueryString: PerPageQueryString = useMemo(() => {
+	const perPageQueryString = useMemo(() => {
 		return perPageString ? 'perPage=' + perPageString : '';
 	}, [perPageString]);
 
@@ -303,7 +303,7 @@ export const useUrlQuery: UseUrlQuery = ({
 	}
 
 	//QUERY STRING
-	const queryString: QueryString = useMemo(() => {
+	const queryString = useMemo(() => {
 		const parts = [filtersQueryString, sortQueryString, includeQueryString, pageQueryString, perPageQueryString].filter(Boolean);
 		return parts.length ? '?' + parts.join('&') : '';
 	}, [filtersQueryString, sortQueryString, includeQueryString, pageQueryString, perPageQueryString]);
