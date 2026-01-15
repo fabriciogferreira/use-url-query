@@ -397,20 +397,23 @@ export const useUrlQuery: UseUrlQuery = ({
 		addInclude,
 		remInclude,
 		//FIELDS
+		// fields
+		// fieldsString
+		// fieldsQueryString
 		// addField,
 		// remField,
 		// toggleField,
 		//PAGE
 		page,
-		setPage,
 		pageString,
 		pageQueryString,
+		setPage,
 		remPage,
 		//PER PAGE
 		perPage,
-		setPerPage,
 		perPageString,
 		perPageQueryString,
+		setPerPage,
 		remPerPage,
 		//QUERY STRING
 		queryString,
