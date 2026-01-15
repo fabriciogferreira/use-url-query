@@ -225,19 +225,20 @@ export const useUrlQuery: UseUrlQuery = ({
 
 		return true
 	}
-	const sortIsAsc: SortIsAsc = (column: string) => {
+
+	const sortIsAscOrDesc = (column: string, direction: Direction) => {
 		const sort = findSort(column);
 
 		if (sort === undefined) return sort
 
-		return sort.direction === '';
+		return sort.direction === direction;
+	}
+
+	const sortIsAsc: SortIsAsc = (column: string) => {
+		return sortIsAscOrDesc(column, '');
 	};
 	const sortIsDesc: SortIsDesc = (column: string) => {
-		const sort = findSort(column);
-
-		if (sort === undefined) return sort
-
-		return sort.direction === '-';
+		return sortIsAscOrDesc(column, '-');
 	}
 
 	//INCLUDE
