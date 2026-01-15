@@ -20,8 +20,8 @@ type Params = {
 
 //FILTER
 type Filters = Record<PropertyKey, unknown>;
-type FilterQueryString = string;
-type FilterBy = (column: string, value: unknown) => true;
+type FiltersQueryString = string;
+type AddFilter = (column: string, value: unknown) => true;
 //SORT
 type Sorts = Sort[];
 type SortString = string;
@@ -33,7 +33,7 @@ type GoDownSort = (column: string) => boolean | undefined;
 type InternalGoDownSort = (sorts: Sort[], index: number) => Sort[];
 type HasSort = (column: string) => boolean | undefined;
 type InternalToggleSortState = (sorts: Sort[], column: string) => Sort[];
-type ToggleSortState = (column: string) => boolean | undefined;
+type ToggleSort = (column: string) => boolean | undefined;
 type InternalToggleSortDirection = (sorts: Sort[], index: number) => Sort[];
 type ToggleDirectionSort = (column: string) => boolean | undefined;
 type SortIsAsc = (column: string) => boolean | undefined;
@@ -62,8 +62,8 @@ type QueryString = string;
 export type UseUrlQuery = (params?: Params) => {
 	//FILTER
 	filters: Filters;
-	filterQueryString: FilterQueryString;
-	filterBy: FilterBy;
+	filtersQueryString: FiltersQueryString;
+	addFilter: AddFilter;
 	//SORT
 	sorts: Sorts;
 	sortString: SortString;
@@ -76,7 +76,7 @@ export type UseUrlQuery = (params?: Params) => {
 	internalGoDownSort: InternalGoDownSort;
 	hasSort: HasSort;
 	internalToggleSortState: InternalToggleSortState;
-	toggleSortState: ToggleSortState;
+	toggleSort: ToggleSort;
 	toggleDirectionSort: ToggleDirectionSort;
 	sortIsAsc: SortIsAsc;
 	sortIsDesc: SortIsDesc;
@@ -124,12 +124,12 @@ export const useUrlQuery: UseUrlQuery = ({
 	//FILTER
 	const [filters, setFilters] = useState<Filters>({});
 
-	const filterQueryString: FilterQueryString = useMemo(() => Object.entries(filters)
+	const filtersQueryString: FiltersQueryString = useMemo(() => Object.entries(filters)
 		.map(([key, value]) => `filter[${key}]=${value}`
 		)
 		.join(','), [filters]);
 
-	const filterBy: FilterBy = (column: string, value: unknown) => {
+	const addFilter: AddFilter = (column: string, value: unknown) => {
 		setFilters(prevFilters => ({
 			...prevFilters,
 			[column]: value
@@ -213,7 +213,7 @@ export const useUrlQuery: UseUrlQuery = ({
 
 		return newSorts;
 	}
-	const toggleSortState: ToggleSortState = (column: string) => {
+	const toggleSort: ToggleSort = (column: string) => {
 		const sort = findSort(column);
 
 		if (sort === undefined) return sort
@@ -326,9 +326,9 @@ export const useUrlQuery: UseUrlQuery = ({
 
 	//QUERY STRING
 	const queryString: QueryString = useMemo(() => {
-		const parts = [filterQueryString, sortQueryString, includeQueryString, pageQueryString, perPageQueryString].filter(Boolean);
+		const parts = [filtersQueryString, sortQueryString, includeQueryString, pageQueryString, perPageQueryString].filter(Boolean);
 		return parts.length ? '?' + parts.join('&') : '';
-	}, [filterQueryString, sortQueryString, includeQueryString, pageQueryString, perPageQueryString]);
+	}, [filtersQueryString, sortQueryString, includeQueryString, pageQueryString, perPageQueryString]);
 
 	//LIFECYCLE
 	useEffect(() => {
@@ -365,7 +365,7 @@ export const useUrlQuery: UseUrlQuery = ({
 					if (sorting.startsWith('-')) {
 						toggleDirectionSort(column);
 					}
-					toggleSortState(column);
+					toggleSort(column);
 				});
 
 				setSorts(prev =>
@@ -391,8 +391,8 @@ export const useUrlQuery: UseUrlQuery = ({
 	return {
 		//FILTER
 		filters,
-		filterQueryString,
-		filterBy,
+		filtersQueryString,
+		addFilter,
 		//SORT
 		sorts,
 		sortString,
@@ -407,7 +407,7 @@ export const useUrlQuery: UseUrlQuery = ({
 		// moveSortTo,
 		hasSort,
 		internalToggleSortState,
-		toggleSortState,
+		toggleSort,
 		// disableSort,
 		// enableSort,
 		// disableSorts,
@@ -422,6 +422,9 @@ export const useUrlQuery: UseUrlQuery = ({
 		addInclude,
 		remInclude,
 		//FIELDS
+		// addField,
+		// remField,
+		// toggleField,
 		//PAGE
 		page,
 		setPage,

@@ -218,7 +218,7 @@ describe('sort', () => {
 		});
 
 		act(() => {
-			sorts.forEach(s => result.current.toggleSortState(s));
+			sorts.forEach(s => result.current.toggleSort(s));
 		});
 
 		it('when move index %i up, should return %s', () => {
@@ -262,7 +262,7 @@ describe('sort', () => {
 		});
 
 		act(() => {
-			sorts.forEach(s => result.current.toggleSortState(s));
+			sorts.forEach(s => result.current.toggleSort(s));
 		});
 
 		it('when move index %i up, should return %s', () => {
@@ -484,16 +484,16 @@ describe('query strings', () => {
 
 		it('should return correct sort string', () => {
 			act(() => {
-				result.current.toggleSortState('asc');
-				result.current.toggleSortState('desc');
+				result.current.toggleSort('asc');
+				result.current.toggleSort('desc');
 			});
 			expect(result.current.sortString).toBe('asc,desc');
 		});
 
 		it('should return correct sort query string', () => {
 			act(() => {
-				result.current.toggleSortState('asc');
-				result.current.toggleSortState('desc');
+				result.current.toggleSort('asc');
+				result.current.toggleSort('desc');
 			});
 			expect(result.current.sortQueryString).toBe('sort=asc,desc');
 		});
@@ -685,12 +685,12 @@ describe('query strings', () => {
 				switch (element) {
 					case 'filter':
 						act(() => {
-							result.current.filterBy('name', 'jhon');
+							result.current.addFilter('name', 'jhon');
 						});
 						break;
 					case 'sort':
 						act(() => {
-							result.current.toggleSortState('name');
+							result.current.toggleSort('name');
 						});
 						break;
 					case 'include':
