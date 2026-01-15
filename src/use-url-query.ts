@@ -194,13 +194,11 @@ export const useUrlQuery: UseUrlQuery = ({
 	};
 
 	const toggleSort: ToggleSort = (column: string) => {
-		const sort = findSort(column);
+		const index = sorts.findIndex(sort => sort.column === column);
 
-		if (sort === undefined) return sort
+		if (index === -1) return undefined
 
 		const newSorts = [...sorts];
-
-		const index = newSorts.findIndex(sort => sort.column === column);
 
 		newSorts[index].include = !newSorts[index].include;
 
@@ -450,3 +448,26 @@ FEATURES FUTURAS:
 	// const filterDebouncedBy = '';
 	// const removeFilter = '';
 */
+
+
+//AGUNS TESTS FALHAM
+// const goUpOrDownSort = (column: string, factor: number) => {
+// 	let index = sorts.findIndex(sort => sort.column === column);
+
+// 	if (index < 0) return undefined;
+
+// 	if (index === (factor ? sorts.length - 1 : 0)) return true;
+
+// 	const newSorts = [...sorts];
+
+// 	if (factor ? index < sorts.length - 1 : index >= 1) {
+// 		const from = index;
+// 		const to = index + factor;
+// 		[newSorts[from], newSorts[to]] = [newSorts[to], newSorts[from]];
+// 		index = to;
+// 	}
+
+// 	setSorts(newSorts)
+
+// 	return true
+// }
