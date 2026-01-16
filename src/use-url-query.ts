@@ -18,29 +18,17 @@ type Params = {
 	normalizeFromUrl?: boolean;
 }
 
+//FIELDS
 //FILTER
 type Filters = Record<PropertyKey, unknown>;
 type FiltersQueryString = string;
 type AddFilter = (column: string, value: unknown) => void;
 type RemoveFilter = (column: string, value: unknown) => void;
-//SORT
-type Sorts = Sort[];
-type SortString = string;
-type SortQueryString = string;
-type FindSort = (column: string) => Sort | undefined;
-type MoveSortUp = (column: string) => void;
-type MoveSortDown = (column: string) => void;
-type HasSort = (column: string) => boolean | undefined;
-type ToggleSort = (column: string) => void;
-type ToggleSortDirection = (column: string) => void;
-type IsSortAsc = (column: string) => boolean | void;
-type IsSortDesc = (column: string) => boolean | void;
 //INCLUDE
 type IncludeString = string;
 type IncludeQueryString = string;
 type AddInclude = (includes: string | string[]) => void;
 type RemoveInclude = (includes: string | string[]) => void;
-//FIELDS
 //PAGE
 type Page = number | null
 type setPage = Set<Page>;
@@ -53,46 +41,58 @@ type setPerPage = Set<PerPage>;
 type PerPageString = string;
 type PerPageQueryString = string;
 type RemovePerPage = () => void;
+//SORT
+type Sorts = Sort[];
+type SortString = string;
+type SortQueryString = string;
+type FindSort = (column: string) => Sort | undefined;
+type HasSort = (column: string) => boolean | undefined;
+type IsSortAsc = (column: string) => boolean | void;
+type IsSortDesc = (column: string) => boolean | void;
+type MoveSortUp = (column: string) => void;
+type MoveSortDown = (column: string) => void;
+type ToggleSort = (column: string) => void;
+type ToggleSortDirection = (column: string) => void;
 //QUERY STRING
 type QueryString = string;
 
 export type UseUrlQuery = (params?: Params) => {
+	//FIELDS
 	//FILTER
 	filters: Filters;
 	filtersQueryString: FiltersQueryString;
 	addFilter: AddFilter;
 	removeFilter: RemoveFilter;
+	//INCLUDE
+	includeString: IncludeString;
+	includeQueryString: IncludeQueryString;
+	addInclude: AddInclude;
+	removeInclude: RemoveInclude;
+	//PAGE
+	page: Page;
+	pageString: PageString;
+	pageQueryString: PageQueryString;
+	removePage: RemovePage;
+	setPage: setPage;
 	//SORT
 	sorts: Sorts;
 	sortString: SortString;
 	sortQueryString: SortQueryString;
 	// sortToEnd: Function;
 	// sortToBegin: Function;
-	moveSortUp: MoveSortUp
-	moveSortDown: MoveSortDown;
 	hasSort: HasSort;
-	toggleSort: ToggleSort;
-	toggleSortDirection: ToggleSortDirection;
 	isSortAsc: IsSortAsc;
 	isSortDesc: IsSortDesc;
-	//INCLUDE
-	includeString: IncludeString;
-	includeQueryString: IncludeQueryString;
-	addInclude: AddInclude;
-	removeInclude: RemoveInclude;
-	//FIELDS
-	//PAGE
-	page: Page;
-	setPage: setPage;
-	pageString: PageString;
-	pageQueryString: PageQueryString;
-	removePage: RemovePage;
+	moveSortUp: MoveSortUp
+	moveSortDown: MoveSortDown;
+	toggleSort: ToggleSort;
+	toggleSortDirection: ToggleSortDirection;
 	//PER PAGE
 	perPage: PerPage;
-	setPerPage: setPerPage;
 	perPageString: PerPageString;
 	perPageQueryString: PerPageQueryString;
 	removePerPage: RemovePerPage;
+	setPerPage: setPerPage;
 	//QUERY STRING
 	queryString: QueryString;
 }
@@ -115,6 +115,8 @@ export const useUrlQuery: UseUrlQuery = ({
 			include: false
 		}
 	});
+
+	//FIELDS
 
 	//FILTER
 	const [filters, setFilters] = useState<Filters>({});
@@ -141,6 +143,61 @@ export const useUrlQuery: UseUrlQuery = ({
 		});
 	}
 
+	//INCLUDE
+	const [includes, setIncludes] = useState<string[]>([]);
+
+	const includeString = useMemo(() => {
+		return includes.join(',');
+	}, [includes]);
+
+	const includeQueryString = useMemo(() => {
+		return includeString ? 'include=' + includeString : '';
+	}, [includeString]);
+
+	const addInclude: AddInclude = (includes: string | string[]) => {
+		const newIncludes = Array.isArray(includes) ? includes : [includes];
+
+		setIncludes(newIncludes);
+	}
+
+	const removeInclude: RemoveInclude = (includesParam: string | string[]) => {
+		const removeIncludes = Array.isArray(includesParam) ? includesParam : [includesParam];
+
+		const newIncludes = includes.filter(inc => !removeIncludes.includes(inc));
+
+		setIncludes(newIncludes);
+	}
+
+	//PAGE
+	const [page, setPage] = useState<Page>(null);
+
+	const pageString = useMemo(() => {
+		return page ? page.toString() : '';
+	}, [page]);
+
+	const pageQueryString = useMemo(() => {
+		return pageString ? 'page=' + pageString : '';
+	}, [pageString]);
+
+	const removePage: RemovePage = () => {
+		setPage(null);
+	}
+
+	//PER PAGE
+	const [perPage, setPerPage] = useState<PerPage>(null);
+
+	const perPageString = useMemo(() => {
+		return perPage ? perPage.toString() : '';
+	}, [perPage]);
+
+	const perPageQueryString = useMemo(() => {
+		return perPageString ? 'perPage=' + perPageString : '';
+	}, [perPageString]);
+
+	const removePerPage: RemovePerPage = () => {
+		setPerPage(null);
+	}
+
 	//SORT
 	const [sorts, setSorts] = useState<Sort[]>(normalizedSorts);
 
@@ -154,8 +211,25 @@ export const useUrlQuery: UseUrlQuery = ({
 	const findSort: FindSort = (column: string) => {
 		return sorts.find(sort => sort.column === column);
 	}
-	// function sortToEnd() { };
-	// function sortToBegin() { };
+
+	const hasSort: HasSort = (column: string) => {
+		return findSort(column) !== undefined;
+	};
+
+	const isSortAscOrDesc = (column: string, direction: Direction) => {
+		const sort = findSort(column);
+
+		if (sort === undefined) return sort
+
+		return sort.direction === direction;
+	}
+
+	const isSortAsc: IsSortAsc = (column: string) => {
+		return isSortAscOrDesc(column, '');
+	};
+	const isSortDesc: IsSortDesc = (column: string) => {
+		return isSortAscOrDesc(column, '-');
+	}
 	const moveSortUp: MoveSortUp = (column: string) => {
 		let index = sorts.findIndex(sort => sort.column === column);
 
@@ -189,12 +263,6 @@ export const useUrlQuery: UseUrlQuery = ({
 
 		setSorts(newSorts)
 	}
-	// function swapSorts() { };
-	// function moveSortTo() { };
-	const hasSort: HasSort = (column: string) => {
-		return findSort(column) !== undefined;
-	};
-
 	const toggleSort: ToggleSort = (column: string) => {
 		const index = sorts.findIndex(sort => sort.column === column);
 
@@ -206,10 +274,6 @@ export const useUrlQuery: UseUrlQuery = ({
 
 		setSorts(newSorts);
 	};
-	// function disableSort() { };
-	// function enableSort() { }
-	// function disableSorts() { };
-	// function enableSorts() { }
 	const toggleSortDirection: ToggleSortDirection = (column: string) => {
 		const index = sorts.findIndex(s => s.column === column);
 
@@ -221,78 +285,14 @@ export const useUrlQuery: UseUrlQuery = ({
 
 		setSorts(newSorts);
 	}
-
-	const isSortAscOrDesc = (column: string, direction: Direction) => {
-		const sort = findSort(column);
-
-		if (sort === undefined) return sort
-
-		return sort.direction === direction;
-	}
-
-	const isSortAsc: IsSortAsc = (column: string) => {
-		return isSortAscOrDesc(column, '');
-	};
-	const isSortDesc: IsSortDesc = (column: string) => {
-		return isSortAscOrDesc(column, '-');
-	}
-
-	//INCLUDE
-	const [includes, setIncludes] = useState<string[]>([]);
-
-	const includeString = useMemo(() => {
-		return includes.join(',');
-	}, [includes]);
-
-	const includeQueryString = useMemo(() => {
-		return includeString ? 'include=' + includeString : '';
-	}, [includeString]);
-
-	const addInclude: AddInclude = (includes: string | string[]) => {
-		const newIncludes = Array.isArray(includes) ? includes : [includes];
-
-		setIncludes(newIncludes);
-	}
-
-	const removeInclude: RemoveInclude = (includesParam: string | string[]) => {
-		const removeIncludes = Array.isArray(includesParam) ? includesParam : [includesParam];
-
-		const newIncludes = includes.filter(inc => !removeIncludes.includes(inc));
-
-		setIncludes(newIncludes);
-	}
-
-	//FIELDS
-
-	//PAGE
-	const [page, setPage] = useState<Page>(null);
-
-	const pageString = useMemo(() => {
-		return page ? page.toString() : '';
-	}, [page]);
-
-	const pageQueryString = useMemo(() => {
-		return pageString ? 'page=' + pageString : '';
-	}, [pageString]);
-
-	const removePage: RemovePage = () => {
-		setPage(null);
-	}
-
-	//PER PAGE
-	const [perPage, setPerPage] = useState<PerPage>(null);
-
-	const perPageString = useMemo(() => {
-		return perPage ? perPage.toString() : '';
-	}, [perPage]);
-
-	const perPageQueryString = useMemo(() => {
-		return perPageString ? 'perPage=' + perPageString : '';
-	}, [perPageString]);
-
-	const removePerPage: RemovePerPage = () => {
-		setPerPage(null);
-	}
+	// function sortToEnd() { };
+	// function sortToBegin() { };
+	// function swapSorts() { };
+	// function moveSortTo() { };
+	// function disableSort() { };
+	// function enableSort() { }
+	// function disableSorts() { };
+	// function enableSorts() { }
 
 	//QUERY STRING
 	const queryString = useMemo(() => {
@@ -359,36 +359,6 @@ export const useUrlQuery: UseUrlQuery = ({
 	}, [normalizeFromUrl])
 
 	return {
-		//FILTER
-		filters,
-		filtersQueryString,
-		addFilter,
-		removeFilter,
-		//SORT
-		sorts,
-		sortString,
-		sortQueryString,
-		// sortToEnd,
-		// sortToBegin,
-		moveSortUp,
-		moveSortDown,
-		// swapSorts,
-		// moveSortTo,
-		hasSort,
-		toggleSort,
-		// disableSort,
-		// enableSort,
-		// disableSorts,
-		// enableSorts,
-		toggleSortDirection,
-		isSortAsc,
-		isSortDesc,
-		//INCLUDE
-		includes,
-		includeString,
-		includeQueryString,
-		addInclude,
-		removeInclude,
 		//FIELDS
 		// fields
 		// fieldsString
@@ -396,18 +366,48 @@ export const useUrlQuery: UseUrlQuery = ({
 		// addField,
 		// removeField,
 		// toggleField,
+		//FILTER
+		filters,
+		filtersQueryString,
+		addFilter,
+		removeFilter,
+		//INCLUDE
+		includes,
+		includeString,
+		includeQueryString,
+		addInclude,
+		removeInclude,
 		//PAGE
 		page,
 		pageString,
 		pageQueryString,
-		setPage,
 		removePage,
+		setPage,
 		//PER PAGE
 		perPage,
 		perPageString,
 		perPageQueryString,
-		setPerPage,
 		removePerPage,
+		setPerPage,
+		//SORT
+		sorts,
+		sortString,
+		sortQueryString,
+		hasSort,
+		isSortAsc,
+		isSortDesc,
+		moveSortUp,
+		moveSortDown,
+		toggleSort,
+		toggleSortDirection,
+		// sortToEnd,
+		// sortToBegin,
+		// swapSorts,
+		// moveSortTo,
+		// disableSort,
+		// enableSort,
+		// disableSorts,
+		// enableSorts,
 		//QUERY STRING
 		queryString,
 	}
@@ -475,12 +475,12 @@ FEATURES FUTURAS:
 //get...    value-> para buscar determinado valor: getFilter
 //has...    value-> para verificar se tem algo, exemplo: hasSort
 //is...     value-> para verificar se é tal coisa, exemplo: isSortDesc
+//move...		void -> para move um item para determinada posição
 //remove... void -> para remover, exemplo: removeFilter
 //reset...  void -> para voltar os valores para os valores iniciais: resetFilters
 //set...    void -> para setar algo que tem apenas um valor, exemplo: setPage
 //toggle... void -> para alternar o valor do param ou o parâmetro, exemplo: toggleSort
 //up??
-//move??
 //swap??
 //enable??
 //disable??
@@ -529,4 +529,3 @@ FEATURES FUTURAS:
 // 1️⃣ Remover useMemo desnecessários
 // 2️⃣ Inicializar sorts corretamente
 // 3️⃣ Refatorar o useEffect para 1 setSorts
-// 4️⃣ Fazer actions retornarem void
