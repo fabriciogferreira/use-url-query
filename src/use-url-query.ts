@@ -38,20 +38,20 @@ type SortIsDesc = (column: string) => boolean | undefined;
 type IncludeString = string;
 type IncludeQueryString = string;
 type AddInclude = (includes: string | string[]) => true;
-type RemInclude = (includes: string | string[]) => true;
+type RemoveInclude = (includes: string | string[]) => true;
 //FIELDS
 //PAGE
 type Page = number | null
 type setPage = Set<Page>;
 type PageString = string;
 type PageQueryString = string;
-type RemPage = () => true;
+type RemovePage = () => true;
 //PER PAGE
 type PerPage = number | null;
 type setPerPage = Set<PerPage>;
 type PerPageString = string;
 type PerPageQueryString = string;
-type RemPerPage = () => void;
+type RemovePerPage = () => void;
 //QUERY STRING
 type QueryString = string;
 
@@ -77,20 +77,20 @@ export type UseUrlQuery = (params?: Params) => {
 	includeString: IncludeString;
 	includeQueryString: IncludeQueryString;
 	addInclude: AddInclude;
-	remInclude: RemInclude;
+	removeInclude: RemoveInclude;
 	//FIELDS
 	//PAGE
 	page: Page;
 	setPage: setPage;
 	pageString: PageString;
 	pageQueryString: PageQueryString;
-	remPage: RemPage;
+	removePage: RemovePage;
 	//PER PAGE
 	perPage: PerPage;
 	setPerPage: setPerPage;
 	perPageString: PerPageString;
 	perPageQueryString: PerPageQueryString;
-	remPerPage: RemPerPage;
+	removePerPage: RemovePerPage;
 	//QUERY STRING
 	queryString: QueryString;
 }
@@ -258,10 +258,10 @@ export const useUrlQuery: UseUrlQuery = ({
 		return true;
 	}
 
-	const remInclude: RemInclude = (includesParam: string | string[]) => {
-		const remIncludes = Array.isArray(includesParam) ? includesParam : [includesParam];
+	const removeInclude: RemoveInclude = (includesParam: string | string[]) => {
+		const removeIncludes = Array.isArray(includesParam) ? includesParam : [includesParam];
 
-		const newIncludes = includes.filter(inc => !remIncludes.includes(inc));
+		const newIncludes = includes.filter(inc => !removeIncludes.includes(inc));
 
 		setIncludes(newIncludes);
 
@@ -281,7 +281,7 @@ export const useUrlQuery: UseUrlQuery = ({
 		return pageString ? 'page=' + pageString : '';
 	}, [pageString]);
 
-	const remPage: RemPage = () => {
+	const removePage: RemovePage = () => {
 		setPage(null);
 		return true
 	}
@@ -297,7 +297,7 @@ export const useUrlQuery: UseUrlQuery = ({
 		return perPageString ? 'perPage=' + perPageString : '';
 	}, [perPageString]);
 
-	const remPerPage: RemPerPage = () => {
+	const removePerPage: RemovePerPage = () => {
 		setPerPage(null);
 		return true;
 	}
@@ -395,26 +395,26 @@ export const useUrlQuery: UseUrlQuery = ({
 		includeString,
 		includeQueryString,
 		addInclude,
-		remInclude,
+		removeInclude,
 		//FIELDS
 		// fields
 		// fieldsString
 		// fieldsQueryString
 		// addField,
-		// remField,
+		// removeField,
 		// toggleField,
 		//PAGE
 		page,
 		pageString,
 		pageQueryString,
 		setPage,
-		remPage,
+		removePage,
 		//PER PAGE
 		perPage,
 		perPageString,
 		perPageQueryString,
 		setPerPage,
-		remPerPage,
+		removePerPage,
 		//QUERY STRING
 		queryString,
 	}
@@ -474,3 +474,20 @@ FEATURES FUTURAS:
 
 // 	return true
 // }
+
+
+// Padrão
+//add...    -> para adicionar, exemplo: addFilter
+//clear...  -> para limpar todos os valores de um param, exemplo: clearFilters
+//get...    -> para buscar determinado valor: getFilter
+//has...    -> para verificar se tem algo, exemplo: hasSort
+//is...     -> para verificar se é tal coisa, exemplo: isSortDesc
+//remove... -> para remover, exemplo: removeFilter
+//reset...  -> para voltar os valores para os valores iniciais: resetFilters
+//set...    -> para setar algo que tem apenas um valor, exemplo: setPage
+//toggle... -> para alternar o valor do param ou o parâmetro, exemplo: toggleSort
+//up??
+//move??
+//swap??
+//enable??
+//disable??
