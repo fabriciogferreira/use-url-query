@@ -519,3 +519,36 @@ FEATURES FUTURAS:
 // PER_PAGE
 // SORTS
 // QUERY STRING
+
+
+// 📌 Resumo honesto
+// ❌ O que NÃO é problema
+
+// Muitos useState
+
+// .map, .filter, .join
+
+// Lógica de query string
+
+// ⚠️ O que é desperdício
+
+// useMemo em valores triviais
+
+// useMemo encadeado
+
+// normalização fora do useState
+
+// 🔥 O que merece atenção real
+
+// useEffect chamando várias actions
+
+// múltiplos setState em sequência
+
+// dependências incompletas
+
+// 🎯 Se eu tivesse que priorizar
+
+// 1️⃣ Remover useMemo desnecessários
+// 2️⃣ Inicializar sorts corretamente
+// 3️⃣ Refatorar o useEffect para 1 setSorts
+// 4️⃣ Fazer actions retornarem void
