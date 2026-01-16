@@ -40,16 +40,6 @@ function subsets<T>(arr: T[]): T[][] {
 // 	funções
 // 	states
 // 	retorno
-const shouldReturnTrueWhenSuccessful = (returned: boolean | undefined) => {
-	it('should return true if successful', () => {
-		expect(returned).toBe(true);
-	});
-}
-const shouldReturnUndefinedWhenNotFound = (returned: boolean | undefined) => {
-	it('should return undefined if not found', () => {
-		expect(returned).toBe(undefined);
-	});
-}
 
 //Regras globais para filtros:
 //Nem sempre um filtro estará presente na URL, ou seja, todos os filtros são opcionais
@@ -239,9 +229,6 @@ describe('sort', () => {
 				sorts: ["asc", "desc", "name"]
 			})
 		);
-
-		shouldReturnTrueWhenSuccessful(urlQuery.moveSortUp('desc'));
-		shouldReturnUndefinedWhenNotFound(urlQuery.moveSortUp('not-found'));
 	});
 
 	describe.each([
@@ -284,9 +271,6 @@ describe('sort', () => {
 				sorts: ["asc", "desc", "name"]
 			})
 		);
-
-		shouldReturnTrueWhenSuccessful(urlQuery.moveSortDown('desc'));
-		shouldReturnUndefinedWhenNotFound(urlQuery.moveSortDown('not-found'));
 	});
 
 	describe('hasSort', () => {
@@ -321,12 +305,6 @@ describe('sort', () => {
 
 			expect(sort?.include).toBe(true);
 		});
-
-		it('should return true if successful', () => {
-			expect(urlQuery.toggleSortDirection('asc')).toBe(true);
-		});
-
-		shouldReturnUndefinedWhenNotFound(urlQuery.toggleSortDirection('not-found'));
 	});
 
 	describe('toggleSortDirection', () => {
@@ -349,12 +327,6 @@ describe('sort', () => {
 			const sort = urlQuery.sorts.find(s => s.column === 'desc');
 			expect(sort?.direction).toBe('');
 		});
-
-		it('should return true if successful', () => {
-			expect(urlQuery.toggleSortDirection('asc')).toBe(true);
-		});
-
-		shouldReturnUndefinedWhenNotFound(urlQuery.toggleSortDirection('not-found'));
 	});
 
 	describe('isSortAsc', () => {
@@ -373,8 +345,6 @@ describe('sort', () => {
 		it('should return false is desc', () => {
 			expect(urlQuery.isSortAsc('desc')).toBe(false);
 		});
-
-		shouldReturnUndefinedWhenNotFound(urlQuery.isSortAsc('not-found'));
 	});
 
 	describe('isSortDesc', () => {
@@ -393,8 +363,6 @@ describe('sort', () => {
 		it('should return true is desc', () => {
 			expect(urlQuery.isSortDesc('desc')).toBe(true);
 		});
-
-		shouldReturnUndefinedWhenNotFound(urlQuery.isSortDesc('not-found'));
 	});
 })
 
@@ -403,16 +371,12 @@ describe('include', () => {
 		const { result: { current: urlQuery } } = renderHook(() =>
 			useUrlQuery()
 		);
-
-		shouldReturnTrueWhenSuccessful(urlQuery.addInclude('desc'));
 	});
 
 	describe('removeInclude', () => {
 		const { result: { current: urlQuery } } = renderHook(() =>
 			useUrlQuery()
 		);
-
-		shouldReturnTrueWhenSuccessful(urlQuery.removeInclude('desc'));
 	});
 });
 

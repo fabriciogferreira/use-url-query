@@ -21,32 +21,32 @@ type Params = {
 //FILTER
 type Filters = Record<PropertyKey, unknown>;
 type FiltersQueryString = string;
-type AddFilter = (column: string, value: unknown) => true;
-type RemoveFilter = (column: string, value: unknown) => true;
+type AddFilter = (column: string, value: unknown) => void;
+type RemoveFilter = (column: string, value: unknown) => void;
 //SORT
 type Sorts = Sort[];
 type SortString = string;
 type SortQueryString = string;
 type FindSort = (column: string) => Sort | undefined;
-type MoveSortUp = (column: string) => true | undefined;
-type MoveSortDown = (column: string) => boolean | undefined;
+type MoveSortUp = (column: string) => void;
+type MoveSortDown = (column: string) => void;
 type HasSort = (column: string) => boolean | undefined;
-type ToggleSort = (column: string) => boolean | undefined;
-type ToggleSortDirection = (column: string) => boolean | undefined;
-type IsSortAsc = (column: string) => boolean | undefined;
-type IsSortDesc = (column: string) => boolean | undefined;
+type ToggleSort = (column: string) => void;
+type ToggleSortDirection = (column: string) => void;
+type IsSortAsc = (column: string) => boolean | void;
+type IsSortDesc = (column: string) => boolean | void;
 //INCLUDE
 type IncludeString = string;
 type IncludeQueryString = string;
-type AddInclude = (includes: string | string[]) => true;
-type RemoveInclude = (includes: string | string[]) => true;
+type AddInclude = (includes: string | string[]) => void;
+type RemoveInclude = (includes: string | string[]) => void;
 //FIELDS
 //PAGE
 type Page = number | null
 type setPage = Set<Page>;
 type PageString = string;
 type PageQueryString = string;
-type RemovePage = () => true;
+type RemovePage = () => void;
 //PER PAGE
 type PerPage = number | null;
 type setPerPage = Set<PerPage>;
@@ -129,8 +129,6 @@ export const useUrlQuery: UseUrlQuery = ({
 			...prevFilters,
 			[column]: value
 		}));
-
-		return true;
 	};
 
 	const removeFilter: RemoveFilter = (column: string) => {
@@ -141,8 +139,6 @@ export const useUrlQuery: UseUrlQuery = ({
 
 			return newFilters
 		});
-
-		return true;
 	}
 
 	//SORT
@@ -163,9 +159,7 @@ export const useUrlQuery: UseUrlQuery = ({
 	const moveSortUp: MoveSortUp = (column: string) => {
 		let index = sorts.findIndex(sort => sort.column === column);
 
-		if (index < 0) return undefined;
-
-		if (index === 0) return true;
+		if (index <= 0) return;
 
 		const newSorts = [...sorts];
 
@@ -177,16 +171,12 @@ export const useUrlQuery: UseUrlQuery = ({
 		}
 
 		setSorts(newSorts)
-
-		return true;
 	};
 
 	const moveSortDown: MoveSortDown = (column: string) => {
 		let index = sorts.findIndex(sort => sort.column === column);
 
-		if (index < 0) return undefined;
-
-		if (index === sorts.length - 1) return true;
+		if (index < 0 || index === sorts.length - 1) return;
 
 		const newSorts = [...sorts];
 
@@ -198,8 +188,6 @@ export const useUrlQuery: UseUrlQuery = ({
 		}
 
 		setSorts(newSorts)
-
-		return true;
 	}
 	// function swapSorts() { };
 	// function moveSortTo() { };
@@ -210,15 +198,13 @@ export const useUrlQuery: UseUrlQuery = ({
 	const toggleSort: ToggleSort = (column: string) => {
 		const index = sorts.findIndex(sort => sort.column === column);
 
-		if (index === -1) return undefined
+		if (index === -1) return;
 
 		const newSorts = [...sorts];
 
 		newSorts[index].include = !newSorts[index].include;
 
 		setSorts(newSorts);
-
-		return true
 	};
 	// function disableSort() { };
 	// function enableSort() { }
@@ -227,15 +213,13 @@ export const useUrlQuery: UseUrlQuery = ({
 	const toggleSortDirection: ToggleSortDirection = (column: string) => {
 		const index = sorts.findIndex(s => s.column === column);
 
-		if (index === -1) return undefined
+		if (index === -1) return;
 
 		const newSorts = [...sorts];
 
 		newSorts[index].direction = newSorts[index].direction === '' ? '-' : '';
 
 		setSorts(newSorts);
-
-		return true
 	}
 
 	const isSortAscOrDesc = (column: string, direction: Direction) => {
@@ -268,8 +252,6 @@ export const useUrlQuery: UseUrlQuery = ({
 		const newIncludes = Array.isArray(includes) ? includes : [includes];
 
 		setIncludes(newIncludes);
-
-		return true;
 	}
 
 	const removeInclude: RemoveInclude = (includesParam: string | string[]) => {
@@ -278,8 +260,6 @@ export const useUrlQuery: UseUrlQuery = ({
 		const newIncludes = includes.filter(inc => !removeIncludes.includes(inc));
 
 		setIncludes(newIncludes);
-
-		return true;
 	}
 
 	//FIELDS
@@ -297,7 +277,6 @@ export const useUrlQuery: UseUrlQuery = ({
 
 	const removePage: RemovePage = () => {
 		setPage(null);
-		return true
 	}
 
 	//PER PAGE
@@ -313,7 +292,6 @@ export const useUrlQuery: UseUrlQuery = ({
 
 	const removePerPage: RemovePerPage = () => {
 		setPerPage(null);
-		return true;
 	}
 
 	//QUERY STRING
@@ -492,15 +470,15 @@ FEATURES FUTURAS:
 
 
 // Padrão
-//add...    -> para adicionar, exemplo: addFilter
-//clear...  -> para limpar todos os valores de um param, exemplo: clearFilters
-//get...    -> para buscar determinado valor: getFilter
-//has...    -> para verificar se tem algo, exemplo: hasSort
-//is...     -> para verificar se é tal coisa, exemplo: isSortDesc
-//remove... -> para remover, exemplo: removeFilter
-//reset...  -> para voltar os valores para os valores iniciais: resetFilters
-//set...    -> para setar algo que tem apenas um valor, exemplo: setPage
-//toggle... -> para alternar o valor do param ou o parâmetro, exemplo: toggleSort
+//add...    void -> para adicionar, exemplo: addFilter
+//clear...  void -> para limpar todos os valores de um param, exemplo: clearFilters
+//get...    value-> para buscar determinado valor: getFilter
+//has...    value-> para verificar se tem algo, exemplo: hasSort
+//is...     value-> para verificar se é tal coisa, exemplo: isSortDesc
+//remove... void -> para remover, exemplo: removeFilter
+//reset...  void -> para voltar os valores para os valores iniciais: resetFilters
+//set...    void -> para setar algo que tem apenas um valor, exemplo: setPage
+//toggle... void -> para alternar o valor do param ou o parâmetro, exemplo: toggleSort
 //up??
 //move??
 //swap??
