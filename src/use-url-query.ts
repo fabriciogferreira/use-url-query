@@ -529,3 +529,5 @@ FEATURES FUTURAS:
 // 1️⃣ Remover useMemo desnecessários
 // 2️⃣ Inicializar sorts corretamente
 // 3️⃣ Refatorar o useEffect para 1 setSorts
+
+//FETURE: OPCIONALMENTE NÃO DISPARAR ATUALIZAÇÃO QUANDO um valor SORT (talvez), INCLUDES OU FIELDS É REMOVIDO, pois isso apenas não deveria mostrar um dados que já foi carregando, ou seja, não é preciso uma nova query para traze um conjunto de dados B que está contido em um conjunto de dados A
