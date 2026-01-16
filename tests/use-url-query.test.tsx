@@ -407,12 +407,12 @@ describe('include', () => {
 		shouldReturnTrueWhenSuccessful(urlQuery.addInclude('desc'));
 	});
 
-	describe('remInclude', () => {
+	describe('removeInclude', () => {
 		const { result: { current: urlQuery } } = renderHook(() =>
 			useUrlQuery()
 		);
 
-		shouldReturnTrueWhenSuccessful(urlQuery.remInclude('desc'));
+		shouldReturnTrueWhenSuccessful(urlQuery.removeInclude('desc'));
 	});
 });
 
@@ -433,13 +433,13 @@ describe('page', () => {
 		expect(result.current.page).toBe(state);
 	});
 
-	it("remPage", () => {
+	it("removePage", () => {
 		const { result } = renderHook(() =>
 			useUrlQuery()
 		);
 
 		act(() => {
-			result.current.remPage();
+			result.current.removePage();
 		});
 
 		expect(result.current.page).toBe(null);
@@ -463,13 +463,13 @@ describe('perPage', () => {
 		expect(result.current.perPage).toBe(state);
 	});
 
-	it("remPerPage", () => {
+	it("removePerPage", () => {
 		const { result } = renderHook(() =>
 			useUrlQuery()
 		);
 
 		act(() => {
-			result.current.remPerPage();
+			result.current.removePerPage();
 		});
 
 		expect(result.current.perPage).toBe(null);
@@ -544,7 +544,7 @@ describe('query strings', () => {
 			[['one', 'two', 'three'], ['two'], 'one,three'],
 			[['one', 'two', 'three'], ['three'], 'one,two'],
 			[['one', 'two', 'three'], ['one', 'two', 'three'], ''],
-		])('remInclude %s, %s', (initial, toRem, expected) => {
+		])('removeInclude %s, %s', (initial, toRemove, expected) => {
 			const { result } = renderHook(() =>
 				useUrlQuery()
 			);
@@ -554,7 +554,7 @@ describe('query strings', () => {
 			});
 
 			act(() => {
-				result.current.remInclude(toRem);
+				result.current.removeInclude(toRemove);
 			});
 
 			it('when set includes state as %s, includeString should return "%s"', () => {
