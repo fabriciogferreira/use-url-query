@@ -22,6 +22,7 @@ type Params = {
 type Filters = Record<PropertyKey, unknown>;
 type FiltersQueryString = string;
 type AddFilter = (column: string, value: unknown) => true;
+type RemoveFilter = (column: string, value: unknown) => true;
 //SORT
 type Sorts = Sort[];
 type SortString = string;
@@ -60,6 +61,7 @@ export type UseUrlQuery = (params?: Params) => {
 	filters: Filters;
 	filtersQueryString: FiltersQueryString;
 	addFilter: AddFilter;
+	removeFilter: RemoveFilter;
 	//SORT
 	sorts: Sorts;
 	sortString: SortString;
@@ -130,6 +132,18 @@ export const useUrlQuery: UseUrlQuery = ({
 
 		return true;
 	};
+
+	const removeFilter: RemoveFilter = (column: string) => {
+		setFilters(prevFilters => {
+			const newFilters = { ...prevFilters }
+
+			delete newFilters[column]
+
+			return newFilters
+		});
+
+		return true;
+	}
 
 	//SORT
 	const [sorts, setSorts] = useState<Sort[]>(normalizedSorts);
@@ -371,6 +385,7 @@ export const useUrlQuery: UseUrlQuery = ({
 		filters,
 		filtersQueryString,
 		addFilter,
+		removeFilter,
 		//SORT
 		sorts,
 		sortString,
@@ -432,7 +447,7 @@ FEATURES FUTURAS:
 - tests podem ser melhoradods, no goUpSort ele deve rodar todos os tests para cada data set: column = p0 column = n !== 0
 - Implementar testes para usestatee
 - permitir configuração de delimitadores para include, appends, fields, sorts, filters
-- permitir alterar os nomes dos parâmetros: sort, include, append, fields, page, perPage, filter, exemplo sortAs: string, 
+- permitir alterar os nomes dos parâmetros: sort, include, append, fields, page, perPage, filter, exemplo sortAs: string,
 	//STRING, NUMBER, BOOLEAN, ARRAY, NULL=''
 	// EQUAL, NOT_EQUAL, GREATER_THAN, LESS_THAN, GREATER_THAN_OR_EQUAL, LESS_THAN_OR_EQUAL, and DYNAMIC
 	//EQUAL - =
