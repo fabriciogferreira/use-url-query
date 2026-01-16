@@ -28,13 +28,13 @@ type Sorts = Sort[];
 type SortString = string;
 type SortQueryString = string;
 type FindSort = (column: string) => Sort | undefined;
-type GoUpSort = (column: string) => true | undefined;
-type GoDownSort = (column: string) => boolean | undefined;
+type MoveSortUp = (column: string) => true | undefined;
+type MoveSortDown = (column: string) => boolean | undefined;
 type HasSort = (column: string) => boolean | undefined;
 type ToggleSort = (column: string) => boolean | undefined;
-type ToggleDirectionSort = (column: string) => boolean | undefined;
-type SortIsAsc = (column: string) => boolean | undefined;
-type SortIsDesc = (column: string) => boolean | undefined;
+type ToggleSortDirection = (column: string) => boolean | undefined;
+type IsSortAsc = (column: string) => boolean | undefined;
+type IsSortDesc = (column: string) => boolean | undefined;
 //INCLUDE
 type IncludeString = string;
 type IncludeQueryString = string;
@@ -68,13 +68,13 @@ export type UseUrlQuery = (params?: Params) => {
 	sortQueryString: SortQueryString;
 	// sortToEnd: Function;
 	// sortToBegin: Function;
-	goUpSort: GoUpSort
-	goDownSort: GoDownSort;
+	moveSortUp: MoveSortUp
+	moveSortDown: MoveSortDown;
 	hasSort: HasSort;
 	toggleSort: ToggleSort;
-	toggleDirectionSort: ToggleDirectionSort;
-	sortIsAsc: SortIsAsc;
-	sortIsDesc: SortIsDesc;
+	toggleSortDirection: ToggleSortDirection;
+	isSortAsc: IsSortAsc;
+	isSortDesc: IsSortDesc;
 	//INCLUDE
 	includeString: IncludeString;
 	includeQueryString: IncludeQueryString;
@@ -160,7 +160,7 @@ export const useUrlQuery: UseUrlQuery = ({
 	}
 	// function sortToEnd() { };
 	// function sortToBegin() { };
-	const goUpSort: GoUpSort = (column: string) => {
+	const moveSortUp: MoveSortUp = (column: string) => {
 		let index = sorts.findIndex(sort => sort.column === column);
 
 		if (index < 0) return undefined;
@@ -181,7 +181,7 @@ export const useUrlQuery: UseUrlQuery = ({
 		return true;
 	};
 
-	const goDownSort: GoDownSort = (column: string) => {
+	const moveSortDown: MoveSortDown = (column: string) => {
 		let index = sorts.findIndex(sort => sort.column === column);
 
 		if (index < 0) return undefined;
@@ -224,7 +224,7 @@ export const useUrlQuery: UseUrlQuery = ({
 	// function enableSort() { }
 	// function disableSorts() { };
 	// function enableSorts() { }
-	const toggleDirectionSort: ToggleDirectionSort = (column: string) => {
+	const toggleSortDirection: ToggleSortDirection = (column: string) => {
 		const index = sorts.findIndex(s => s.column === column);
 
 		if (index === -1) return undefined
@@ -238,7 +238,7 @@ export const useUrlQuery: UseUrlQuery = ({
 		return true
 	}
 
-	const sortIsAscOrDesc = (column: string, direction: Direction) => {
+	const isSortAscOrDesc = (column: string, direction: Direction) => {
 		const sort = findSort(column);
 
 		if (sort === undefined) return sort
@@ -246,11 +246,11 @@ export const useUrlQuery: UseUrlQuery = ({
 		return sort.direction === direction;
 	}
 
-	const sortIsAsc: SortIsAsc = (column: string) => {
-		return sortIsAscOrDesc(column, '');
+	const isSortAsc: IsSortAsc = (column: string) => {
+		return isSortAscOrDesc(column, '');
 	};
-	const sortIsDesc: SortIsDesc = (column: string) => {
-		return sortIsAscOrDesc(column, '-');
+	const isSortDesc: IsSortDesc = (column: string) => {
+		return isSortAscOrDesc(column, '-');
 	}
 
 	//INCLUDE
@@ -355,7 +355,7 @@ export const useUrlQuery: UseUrlQuery = ({
 					orderingMap.set(column, index);
 					//TODO: melhorar, ao invés de editar cada propriedade por vez, criar um função que altere vários propriedades de uma vez ou melhor que altere várias propriedades de uma vez de vários items
 					if (sorting.startsWith('-')) {
-						toggleDirectionSort(column);
+						toggleSortDirection(column);
 					}
 					toggleSort(column);
 				});
@@ -392,8 +392,8 @@ export const useUrlQuery: UseUrlQuery = ({
 		sortQueryString,
 		// sortToEnd,
 		// sortToBegin,
-		goUpSort,
-		goDownSort,
+		moveSortUp,
+		moveSortDown,
 		// swapSorts,
 		// moveSortTo,
 		hasSort,
@@ -402,9 +402,9 @@ export const useUrlQuery: UseUrlQuery = ({
 		// enableSort,
 		// disableSorts,
 		// enableSorts,
-		toggleDirectionSort,
-		sortIsAsc,
-		sortIsDesc,
+		toggleSortDirection,
+		isSortAsc,
+		isSortDesc,
 		//INCLUDE
 		includes,
 		includeString,
@@ -506,3 +506,16 @@ FEATURES FUTURAS:
 //swap??
 //enable??
 //disable??
+
+//APLICAR A MESMA ESTRUTURA DO SORT PARA O FILTER, INCLUDE, FIELDS?
+// PQ? EM ALGUNS CASOS, O USUÁRIO APENAS QUER DESATIVAR AQUELE FILTRO, E NÃO REMOVER ELE, PODE SER ÚTIL QUANDO SE ESTÁ TESTANDO FILTROS
+
+
+// Ordernar areas assim
+// FILEDS
+// FILTERS
+// INCLUDES
+// PAGE
+// PER_PAGE
+// SORTS
+// QUERY STRING

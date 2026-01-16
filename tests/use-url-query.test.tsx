@@ -206,7 +206,7 @@ describe('sort', () => {
 		[sorts, 2, ['1', '3', '2', '4', '5']],
 		[sorts, 3, ['1', '2', '4', '3', '5']],
 		[sorts, 4, ['1', '2', '3', '5', '4']],
-	])('goUpSort %i, %i', (initialSorts, indexToMove, expectedSorts) => {
+	])('moveSortUp %i, %i', (initialSorts, indexToMove, expectedSorts) => {
 		const { result } = renderHook(() =>
 			useUrlQuery({
 				sorts: initialSorts
@@ -214,7 +214,7 @@ describe('sort', () => {
 		);
 
 		act(() => {
-			result.current.goUpSort(initialSorts[indexToMove]);
+			result.current.moveSortUp(initialSorts[indexToMove]);
 		});
 
 		act(() => {
@@ -233,15 +233,15 @@ describe('sort', () => {
 			expect(result.current.sortQueryString).toBe('sort=' + expectedSorts.join(','));
 		});
 	});
-	describe('goUpSort', () => {
+	describe('moveSortUp', () => {
 		const { result: { current: urlQuery } } = renderHook(() =>
 			useUrlQuery({
 				sorts: ["asc", "desc", "name"]
 			})
 		);
 
-		shouldReturnTrueWhenSuccessful(urlQuery.goUpSort('desc'));
-		shouldReturnUndefinedWhenNotFound(urlQuery.goUpSort('not-found'));
+		shouldReturnTrueWhenSuccessful(urlQuery.moveSortUp('desc'));
+		shouldReturnUndefinedWhenNotFound(urlQuery.moveSortUp('not-found'));
 	});
 
 	describe.each([
@@ -250,7 +250,7 @@ describe('sort', () => {
 		[sorts, 2, ['1', '2', '4', '3', '5']],
 		[sorts, 3, ['1', '2', '3', '5', '4']],
 		[sorts, 4, ['1', '2', '3', '4', '5']],
-	])('goDownSort %i, %i', (initialSorts, indexToMove, expectedSorts) => {
+	])('moveSortDown %i, %i', (initialSorts, indexToMove, expectedSorts) => {
 		const { result } = renderHook(() =>
 			useUrlQuery({
 				sorts: initialSorts
@@ -258,7 +258,7 @@ describe('sort', () => {
 		);
 
 		act(() => {
-			result.current.goDownSort(initialSorts[indexToMove]);
+			result.current.moveSortDown(initialSorts[indexToMove]);
 		});
 
 		act(() => {
@@ -278,15 +278,15 @@ describe('sort', () => {
 		});
 	});
 
-	describe('goDownSort', () => {
+	describe('moveSortDown', () => {
 		const { result: { current: urlQuery } } = renderHook(() =>
 			useUrlQuery({
 				sorts: ["asc", "desc", "name"]
 			})
 		);
 
-		shouldReturnTrueWhenSuccessful(urlQuery.goDownSort('desc'));
-		shouldReturnUndefinedWhenNotFound(urlQuery.goDownSort('not-found'));
+		shouldReturnTrueWhenSuccessful(urlQuery.moveSortDown('desc'));
+		shouldReturnUndefinedWhenNotFound(urlQuery.moveSortDown('not-found'));
 	});
 
 	describe('hasSort', () => {
@@ -323,78 +323,78 @@ describe('sort', () => {
 		});
 
 		it('should return true if successful', () => {
-			expect(urlQuery.toggleDirectionSort('asc')).toBe(true);
+			expect(urlQuery.toggleSortDirection('asc')).toBe(true);
 		});
 
-		shouldReturnUndefinedWhenNotFound(urlQuery.toggleDirectionSort('not-found'));
+		shouldReturnUndefinedWhenNotFound(urlQuery.toggleSortDirection('not-found'));
 	});
 
-	describe('toggleDirectionSort', () => {
+	describe('toggleSortDirection', () => {
 		const { result: { current: urlQuery } } = renderHook(() =>
 			useUrlQuery({
 				sorts: ["asc", "desc"]
 			})
 		);
 
-		urlQuery.toggleDirectionSort('desc');
+		urlQuery.toggleSortDirection('desc');
 
 		it('should toggle asc to desc', () => {
-			urlQuery.toggleDirectionSort('asc');
+			urlQuery.toggleSortDirection('asc');
 			const sort = urlQuery.sorts.find(s => s.column === 'asc');
 			expect(sort?.direction).toBe('-');
 		});
 
 		it('should toggle desc to asc', () => {
-			urlQuery.toggleDirectionSort('desc');
+			urlQuery.toggleSortDirection('desc');
 			const sort = urlQuery.sorts.find(s => s.column === 'desc');
 			expect(sort?.direction).toBe('');
 		});
 
 		it('should return true if successful', () => {
-			expect(urlQuery.toggleDirectionSort('asc')).toBe(true);
+			expect(urlQuery.toggleSortDirection('asc')).toBe(true);
 		});
 
-		shouldReturnUndefinedWhenNotFound(urlQuery.toggleDirectionSort('not-found'));
+		shouldReturnUndefinedWhenNotFound(urlQuery.toggleSortDirection('not-found'));
 	});
 
-	describe('sortIsAsc', () => {
+	describe('isSortAsc', () => {
 		const { result: { current: urlQuery } } = renderHook(() =>
 			useUrlQuery({
 				sorts: ["asc", "desc"]
 			})
 		);
 
-		urlQuery.toggleDirectionSort('desc');
+		urlQuery.toggleSortDirection('desc');
 
 		it('should return true is asc', () => {
-			expect(urlQuery.sortIsAsc('asc')).toBe(true);
+			expect(urlQuery.isSortAsc('asc')).toBe(true);
 		});
 
 		it('should return false is desc', () => {
-			expect(urlQuery.sortIsAsc('desc')).toBe(false);
+			expect(urlQuery.isSortAsc('desc')).toBe(false);
 		});
 
-		shouldReturnUndefinedWhenNotFound(urlQuery.sortIsAsc('not-found'));
+		shouldReturnUndefinedWhenNotFound(urlQuery.isSortAsc('not-found'));
 	});
 
-	describe('sortIsDesc', () => {
+	describe('isSortDesc', () => {
 		const { result: { current: urlQuery } } = renderHook(() =>
 			useUrlQuery({
 				sorts: ["asc", "desc"]
 			})
 		);
 
-		urlQuery.toggleDirectionSort('desc');
+		urlQuery.toggleSortDirection('desc');
 
 		it('should return false is asc', () => {
-			expect(urlQuery.sortIsDesc('asc')).toBe(false);
+			expect(urlQuery.isSortDesc('asc')).toBe(false);
 		});
 
 		it('should return true is desc', () => {
-			expect(urlQuery.sortIsDesc('desc')).toBe(true);
+			expect(urlQuery.isSortDesc('desc')).toBe(true);
 		});
 
-		shouldReturnUndefinedWhenNotFound(urlQuery.sortIsDesc('not-found'));
+		shouldReturnUndefinedWhenNotFound(urlQuery.isSortDesc('not-found'));
 	});
 })
 
