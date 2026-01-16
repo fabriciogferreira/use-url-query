@@ -309,6 +309,7 @@ export const useUrlQuery: UseUrlQuery = ({
 		if (searchParams == undefined) return
 
 		const newFilters: Record<string, string> = {};
+		const newSorts = [...sorts]
 
 		searchParams.forEach((value, key) => {
 			const filterMatch = key.match(/^filter\[(.+)\]$/);
@@ -330,32 +331,36 @@ export const useUrlQuery: UseUrlQuery = ({
 
 				sortings.forEach((sorting, index) => {
 					const column = sorting.replace(/^-/, '');
+
+					const newSortIndex = newSorts.findIndex(newSort => newSort.column === column)
+
+					if (newSortIndex < 0) return
+
 					orderingMap.set(column, index);
-					//TODO: melhorar, ao invés de editar cada propriedade por vez, criar um função que altere vários propriedades de uma vez ou melhor que altere várias propriedades de uma vez de vários items
 					if (sorting.startsWith('-')) {
-						toggleSortDirection(column);
+						newSorts[newSortIndex].direction = '-' 
 					}
-					toggleSort(column);
+
+					newSorts[newSortIndex].include = true 
 				});
 
-				setSorts(prev =>
-					[...prev].sort((a, b) => {
-						const aIndex = orderingMap.get(a.column);
-						const bIndex = orderingMap.get(b.column);
+				newSorts.sort((a, b) => {
+					const aIndex = orderingMap.get(a.column);
+					const bIndex = orderingMap.get(b.column);
 
-						if (aIndex === undefined && bIndex === undefined) return 0;
-						if (aIndex === undefined) return 1;
-						if (bIndex === undefined) return -1;
+					if (aIndex === undefined && bIndex === undefined) return 0;
+					if (aIndex === undefined) return 1;
+					if (bIndex === undefined) return -1;
 
-						return aIndex - bIndex;
-					})
-				);
+					return aIndex - bIndex;
+				})
 
 				return
 			}
 		});
 
 		setFilters(newFilters)
+		setSorts(newSorts)
 	}, [normalizeFromUrl])
 
 	return {
