@@ -1,5 +1,8 @@
 import { useMemo, useState, Dispatch, SetStateAction, useEffect } from "react"
 import { useSearchParams } from "next/navigation";
+import { schemaToQueryString as fnSchemaToQueryString} from "@fabriciogferreira/schema-to-query-string";
+import { ZodObject } from "zod/v4";
+
 type Set<T> = Dispatch<SetStateAction<T>>
 
 type Direction = '-' | ''
@@ -16,6 +19,12 @@ type SortParam = Pick<Sort, 'column' | 'label'>[] | Sort['column'][]
 type Params = {
 	sorts?: SortParam;
 	normalizeFromUrl?: boolean;
+	schemaToQueryString?: {
+		schema: ZodObject
+		rootResource: string
+		includeKey: string | undefined
+		fieldsKey: string | undefined
+	}
 }
 
 //FIELDS
@@ -102,6 +111,7 @@ export type UseUrlQueryContext = ReturnType<UseUrlQuery>;
 export const useUrlQuery: UseUrlQuery = ({
 	sorts: initialSorts = [],
 	normalizeFromUrl = true,
+	schemaToQueryString,
 } = {}) => {
 	//LIFECYCLE INIT
 	const normalizedSorts: Sort[] = initialSorts.map(Parasort => {
@@ -115,6 +125,16 @@ export const useUrlQuery: UseUrlQuery = ({
 			include: false
 		}
 	});
+
+	let schemaConverted = '';
+	if (schemaToQueryString) {
+		schemaConverted = fnSchemaToQueryString(
+			schemaToQueryString.schema,
+			schemaToQueryString.rootResource,
+			schemaToQueryString.includeKey,
+			schemaToQueryString.fieldsKey,
+		) 
+	}
 
 	//FIELDS
 
@@ -296,7 +316,7 @@ export const useUrlQuery: UseUrlQuery = ({
 
 	//QUERY STRING
 	const queryString = useMemo(() => {
-		const parts = [filtersQueryString, sortQueryString, includeQueryString, pageQueryString, perPageQueryString].filter(Boolean);
+		const parts = [filtersQueryString, sortQueryString, includeQueryString, pageQueryString, perPageQueryString, schemaConverted].filter(Boolean);
 		return parts.length ? '?' + parts.join('&') : '';
 	}, [filtersQueryString, sortQueryString, includeQueryString, pageQueryString, perPageQueryString]);
 
@@ -420,15 +440,12 @@ export const useUrlQuery: UseUrlQuery = ({
 
 /*
 FEATURES FUTURAS:
-- trocar sort para sorting onde faz sentido
-- analisar nomencatura de funções, por exemplo: addInclude poderia ser apenas include
 - Suporte a appends
 - Suporte a filtros
 - suporte a fields
 - normalização de valores vindos da URL
 - atualização da URL
 - tests podem ser melhoradods, no goUpSort ele deve rodar todos os tests para cada data set: column = p0 column = n !== 0
-- Implementar testes para usestatee
 - permitir configuração de delimitadores para include, appends, fields, sorts, filters
 - permitir alterar os nomes dos parâmetros: sort, include, append, fields, page, perPage, filter, exemplo sortAs: string,
 	//STRING, NUMBER, BOOLEAN, ARRAY, NULL=''
