@@ -1,7 +1,7 @@
 import { useMemo, useState, Dispatch, SetStateAction, useEffect } from "react"
 import { useSearchParams } from "next/navigation";
-import { schemaToQueryString as fnSchemaToQueryString} from "@fabriciogferreira/schema-to-query-string";
-import { ZodObject } from "zod/v4";
+import { schemaToQueryString as fnSchemaToQueryString } from "@fabriciogferreira/schema-to-query-string";
+import { ZodObject, ZodType } from "zod/v4";
 
 type Set<T> = Dispatch<SetStateAction<T>>
 
@@ -25,6 +25,7 @@ type Params = {
 		includeKey: string | undefined
 		fieldsKey: string | undefined
 	}
+	filterSchema?: Record<string, ZodType>
 }
 
 //FIELDS
@@ -112,6 +113,7 @@ export const useUrlQuery: UseUrlQuery = ({
 	sorts: initialSorts = [],
 	normalizeFromUrl = true,
 	schemaToQueryString,
+	filterSchema
 } = {}) => {
 	//LIFECYCLE INIT
 	const normalizedSorts: Sort[] = initialSorts.map(Parasort => {
@@ -133,7 +135,7 @@ export const useUrlQuery: UseUrlQuery = ({
 			schemaToQueryString.rootResource,
 			schemaToQueryString.includeKey,
 			schemaToQueryString.fieldsKey,
-		) 
+		)
 	}
 
 	//FIELDS
@@ -141,10 +143,28 @@ export const useUrlQuery: UseUrlQuery = ({
 	//FILTER
 	const [filters, setFilters] = useState<Filters>({});
 
-	const filtersQueryString = useMemo(() => Object.entries(filters)
-		.map(([key, value]) => `filter[${key}]=${value}`
-		)
-		.join(','), [filters]);
+	const filtersQueryString = useMemo(() => {
+		return Object.entries(filters)
+			.map(([key, value]) => {
+				let valueParsed = '';
+				if (typeof value === 'bigint') {
+					valueParsed = value.toString()
+				} else if (typeof value === 'boolean') {
+					valueParsed = value ? '1' : '0'
+				} else if (typeof value === 'number') {
+					valueParsed = value.toString()
+				} else if (typeof value === 'string') {
+					valueParsed = value
+				} else if (Array.isArray(value)) {
+					valueParsed = value.join(',')
+				} else {
+					valueParsed = JSON.stringify(value)
+				}
+
+				return `filter[${key}]=${value}`
+			})
+			.join(',')
+	}, [filters]);
 
 	const addFilter: AddFilter = (column: string, value: unknown) => {
 		setFilters(prevFilters => ({
@@ -328,7 +348,7 @@ export const useUrlQuery: UseUrlQuery = ({
 
 		if (searchParams == undefined) return
 
-		const newFilters: Record<string, string> = {};
+		const newFilters: Record<string, unknown> = {};
 		const newSorts = [...sorts]
 
 		searchParams.forEach((value, key) => {
@@ -336,6 +356,19 @@ export const useUrlQuery: UseUrlQuery = ({
 
 			if (filterMatch) {
 				const column = filterMatch[1];
+
+				if (filterSchema) {
+					const schemaField = filterSchema[column]
+
+					if (schemaField) {
+						const result = schemaField.safeParse(value)
+
+						if (result.success) {
+							newFilters[column] = result.data
+							return
+						}
+					}
+				}
 
 				newFilters[column] = value;
 
@@ -358,10 +391,10 @@ export const useUrlQuery: UseUrlQuery = ({
 
 					orderingMap.set(column, index);
 					if (sorting.startsWith('-')) {
-						newSorts[newSortIndex].direction = '-' 
+						newSorts[newSortIndex].direction = '-'
 					}
 
-					newSorts[newSortIndex].include = true 
+					newSorts[newSortIndex].include = true
 				});
 
 				newSorts.sort((a, b) => {
