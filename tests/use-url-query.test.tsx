@@ -3,6 +3,8 @@ import { describe, expect, it, mock } from "bun:test";
 import { renderHook, act } from "@testing-library/react";
 import fastCartesian from 'fast-cartesian'
 import { Permutation, PowerSet, } from 'js-combinatorics';
+import z4 from "zod/v4";
+
 //Criar função que gere todas as combinações possíveis de sorts com essas configurações:
 // ordem importa? &
 // (size | min | max | min & max) ?
@@ -50,6 +52,22 @@ function subsets<T>(arr: T[]): T[][] {
 
 // TESTES FUTUROS
 //E SE EU PASSAR FILTROS DUPLICADOS?
+
+it('should return undefined when field is missing', () => {
+	mockedSearchParams = new URLSearchParams('');
+
+	const { result } = renderHook(() =>
+		useUrlQuery({
+			normalizeFromUrl: true,
+			filterSchema: z4.object({
+				number: z4.number(),
+			})
+		})
+	);
+
+	expect(result.current.filters.number).toEqual(undefined);
+})
+
 describe('params', () => {
 	describe('normalizeFromUrl', () => {
 		const filters = [['string', 'a'], ['number', '1'], ['boolean', 'true'], ['array', 'a,b,c'], ['null', '']]

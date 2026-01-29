@@ -1,9 +1,23 @@
-import { useMemo, useState, Dispatch, SetStateAction, useEffect } from "react"
+import { useMemo, useState, useEffect } from "react"
 import { useSearchParams } from "next/navigation";
 import { schemaToQueryString as fnSchemaToQueryString } from "@fabriciogferreira/schema-to-query-string";
-import { ZodObject, ZodType } from "zod/v4";
+import z4, { ZodObject, ZodRawShape } from "zod/v4";
 
-type Set<T> = Dispatch<SetStateAction<T>>
+type Params<S extends ZodRawShape> = {
+	sorts?: SortParam;
+  normalizeFromUrl?: boolean
+  filterSchema?: ZodObject<S>
+		schemaToQueryString?: {
+		schema: ZodObject
+		rootResource: string
+		includeKey: string | undefined
+		fieldsKey: string | undefined
+	}
+}
+
+type FiltersFromSchema<S extends ZodRawShape> = {
+  [K in keyof S]?: z4.infer<S[K]>
+} & Record<string, unknown>
 
 type Direction = '-' | ''
 
@@ -16,45 +30,20 @@ export type Sort = {
 
 type SortParam = Pick<Sort, 'column' | 'label'>[] | Sort['column'][]
 
-type Params = {
-	sorts?: SortParam;
-	normalizeFromUrl?: boolean;
-	schemaToQueryString?: {
-		schema: ZodObject
-		rootResource: string
-		includeKey: string | undefined
-		fieldsKey: string | undefined
-	}
-	filterSchema?: Record<string, ZodType>
-}
-
 //FIELDS
 //FILTER
-type Filters = Record<PropertyKey, unknown>;
-type FiltersQueryString = string;
 type AddFilter = (column: string, value: unknown) => void;
 type RemoveFilter = (column: string, value: unknown) => void;
 //INCLUDE
-type IncludeString = string;
-type IncludeQueryString = string;
 type AddInclude = (includes: string | string[]) => void;
 type RemoveInclude = (includes: string | string[]) => void;
 //PAGE
 type Page = number | null
-type setPage = Set<Page>;
-type PageString = string;
-type PageQueryString = string;
 type RemovePage = () => void;
 //PER PAGE
 type PerPage = number | null;
-type setPerPage = Set<PerPage>;
-type PerPageString = string;
-type PerPageQueryString = string;
 type RemovePerPage = () => void;
 //SORT
-type Sorts = Sort[];
-type SortString = string;
-type SortQueryString = string;
 type FindSort = (column: string) => Sort | undefined;
 type HasSort = (column: string) => boolean | undefined;
 type IsSortAsc = (column: string) => boolean | void;
@@ -64,57 +53,13 @@ type MoveSortDown = (column: string) => void;
 type ToggleSort = (column: string) => void;
 type ToggleSortDirection = (column: string) => void;
 //QUERY STRING
-type QueryString = string;
 
-export type UseUrlQuery = (params?: Params) => {
-	//FIELDS
-	//FILTER
-	filters: Filters;
-	filtersQueryString: FiltersQueryString;
-	addFilter: AddFilter;
-	removeFilter: RemoveFilter;
-	//INCLUDE
-	includeString: IncludeString;
-	includeQueryString: IncludeQueryString;
-	addInclude: AddInclude;
-	removeInclude: RemoveInclude;
-	//PAGE
-	page: Page;
-	pageString: PageString;
-	pageQueryString: PageQueryString;
-	removePage: RemovePage;
-	setPage: setPage;
-	//SORT
-	sorts: Sorts;
-	sortString: SortString;
-	sortQueryString: SortQueryString;
-	// sortToEnd: Function;
-	// sortToBegin: Function;
-	hasSort: HasSort;
-	isSortAsc: IsSortAsc;
-	isSortDesc: IsSortDesc;
-	moveSortUp: MoveSortUp
-	moveSortDown: MoveSortDown;
-	toggleSort: ToggleSort;
-	toggleSortDirection: ToggleSortDirection;
-	//PER PAGE
-	perPage: PerPage;
-	perPageString: PerPageString;
-	perPageQueryString: PerPageQueryString;
-	removePerPage: RemovePerPage;
-	setPerPage: setPerPage;
-	//QUERY STRING
-	queryString: QueryString;
-}
-
-export type UseUrlQueryContext = ReturnType<UseUrlQuery>;
-
-export const useUrlQuery: UseUrlQuery = ({
+export function useUrlQuery<S extends z4.ZodRawShape = {}>({
 	sorts: initialSorts = [],
 	normalizeFromUrl = true,
 	schemaToQueryString,
 	filterSchema
-} = {}) => {
+}: Params<S> = {}) {
 	//LIFECYCLE INIT
 	const normalizedSorts: Sort[] = initialSorts.map(Parasort => {
 		const restItem = typeof Parasort === 'string'
@@ -139,8 +84,8 @@ export const useUrlQuery: UseUrlQuery = ({
 	}
 
 	//FIELDS
-
 	//FILTER
+	type Filters = FiltersFromSchema<S>
 	const [filters, setFilters] = useState<Filters>({});
 
 	const filtersQueryString = useMemo(() => {
@@ -357,11 +302,11 @@ export const useUrlQuery: UseUrlQuery = ({
 			if (filterMatch) {
 				const column = filterMatch[1];
 
-				if (filterSchema) {
-					const schemaField = filterSchema[column]
+				if (filterSchema?.shape[column]) {
+					const field = filterSchema.shape[column]
 
-					if (schemaField) {
-						const result = schemaField.safeParse(value)
+					if (field instanceof z4.ZodType) {
+						const result = field.safeParse(value)
 
 						if (result.success) {
 							newFilters[column] = result.data
@@ -412,7 +357,7 @@ export const useUrlQuery: UseUrlQuery = ({
 			}
 		});
 
-		setFilters(newFilters)
+		setFilters(newFilters as Filters)
 		setSorts(newSorts)
 	}, [normalizeFromUrl])
 
@@ -470,119 +415,3 @@ export const useUrlQuery: UseUrlQuery = ({
 		queryString,
 	}
 }
-
-/*
-FEATURES FUTURAS:
-- Suporte a appends
-- Suporte a filtros
-- suporte a fields
-- normalização de valores vindos da URL
-- atualização da URL
-- tests podem ser melhoradods, no goUpSort ele deve rodar todos os tests para cada data set: column = p0 column = n !== 0
-- permitir configuração de delimitadores para include, appends, fields, sorts, filters
-- permitir alterar os nomes dos parâmetros: sort, include, append, fields, page, perPage, filter, exemplo sortAs: string,
-	//STRING, NUMBER, BOOLEAN, ARRAY, NULL=''
-	// EQUAL, NOT_EQUAL, GREATER_THAN, LESS_THAN, GREATER_THAN_OR_EQUAL, LESS_THAN_OR_EQUAL, and DYNAMIC
-	//EQUAL - =
-	//NOT_EQUAL - != - ne
-	//GREATER_THAN - > - gt
-	//LESS_THAN - < - lt
-	//GREATER_THAN_OR_EQUAL - >= - gte
-	//LESS_THAN_OR_EQUAL - <= - lte
-	//DYNAMIC
-	// const filterByNE = '';
-	// const filterByGT = '';
-	// const filterByLT = '';
-	// const filterByGTE = '';
-	// const filterByLTE = '';
-	//CRIAR DEBOUNCED FILTER
-	// const filterDebouncedBy = '';
-	// const removeFilter = '';
-*/
-
-
-//AGUNS TESTS FALHAM
-// const goUpOrDownSort = (column: string, factor: number) => {
-// 	let index = sorts.findIndex(sort => sort.column === column);
-
-// 	if (index < 0) return undefined;
-
-// 	if (index === (factor ? sorts.length - 1 : 0)) return true;
-
-// 	const newSorts = [...sorts];
-
-// 	if (factor ? index < sorts.length - 1 : index >= 1) {
-// 		const from = index;
-// 		const to = index + factor;
-// 		[newSorts[from], newSorts[to]] = [newSorts[to], newSorts[from]];
-// 		index = to;
-// 	}
-
-// 	setSorts(newSorts)
-
-// 	return true
-// }
-
-
-// Padrão
-//add...    void -> para adicionar, exemplo: addFilter
-//clear...  void -> para limpar todos os valores de um param, exemplo: clearFilters
-//get...    value-> para buscar determinado valor: getFilter
-//has...    value-> para verificar se tem algo, exemplo: hasSort
-//is...     value-> para verificar se é tal coisa, exemplo: isSortDesc
-//move...		void -> para move um item para determinada posição
-//remove... void -> para remover, exemplo: removeFilter
-//reset...  void -> para voltar os valores para os valores iniciais: resetFilters
-//set...    void -> para setar algo que tem apenas um valor, exemplo: setPage
-//toggle... void -> para alternar o valor do param ou o parâmetro, exemplo: toggleSort
-//up??
-//swap??
-//enable??
-//disable??
-
-//APLICAR A MESMA ESTRUTURA DO SORT PARA O FILTER, INCLUDE, FIELDS?
-// PQ? EM ALGUNS CASOS, O USUÁRIO APENAS QUER DESATIVAR AQUELE FILTRO, E NÃO REMOVER ELE, PODE SER ÚTIL QUANDO SE ESTÁ TESTANDO FILTROS
-
-
-// Ordernar areas assim
-// FILEDS
-// FILTERS
-// INCLUDES
-// PAGE
-// PER_PAGE
-// SORTS
-// QUERY STRING
-
-
-// 📌 Resumo honesto
-// ❌ O que NÃO é problema
-
-// Muitos useState
-
-// .map, .filter, .join
-
-// Lógica de query string
-
-// ⚠️ O que é desperdício
-
-// useMemo em valores triviais
-
-// useMemo encadeado
-
-// normalização fora do useState
-
-// 🔥 O que merece atenção real
-
-// useEffect chamando várias actions
-
-// múltiplos setState em sequência
-
-// dependências incompletas
-
-// 🎯 Se eu tivesse que priorizar
-
-// 1️⃣ Remover useMemo desnecessários
-// 2️⃣ Inicializar sorts corretamente
-// 3️⃣ Refatorar o useEffect para 1 setSorts
-
-//FETURE: OPCIONALMENTE NÃO DISPARAR ATUALIZAÇÃO QUANDO um valor SORT (talvez), INCLUDES OU FIELDS É REMOVIDO, pois isso apenas não deveria mostrar um dados que já foi carregando, ou seja, não é preciso uma nova query para traze um conjunto de dados B que está contido em um conjunto de dados A
