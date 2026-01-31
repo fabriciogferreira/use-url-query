@@ -1,9 +1,10 @@
 import { Sort, SortParam, useUrlQuery } from "../src/use-url-query";
-import { describe, expect, it, mock } from "bun:test";
+import { beforeEach, describe, expect, it, mock } from "bun:test";
 import { renderHook, act } from "@testing-library/react";
 import fastCartesian from 'fast-cartesian'
 import { Permutation, PowerSet, } from 'js-combinatorics';
-import z4 from "zod/v4";
+import z4, { object, property, z } from "zod/v4";
+import { combinations, powerSet } from "../src/combine";
 
 let mockedSearchParams: URLSearchParams;
 
@@ -228,6 +229,152 @@ describe('params', () => {
 			})
 		});
 	});
+
+	describe('fieldsSchema', () => {
+
+	})
+
+	describe('schemaToQueryString', () => {
+		//TODO: FORNECER UM SCHEMA BASE, STRING E QUERY STRING PARA QUE PESSOAS QUE UTLIZEM A LIB POSSAM TESTAR MAIS FACILMENTE 
+		//TODO: FORNECER TIPOS PARA QUE OUTRAS PESSOAS POSSAM ACOPLAR A FUNÇÃO MAIS FACILMENTE EM SEUS HOOK
+		const schema = z4.object({
+			propertyOne: z.string(),
+			object: z.object({
+				propertyOne: z.number()
+			})
+		})
+
+		let expectedQueryString = ''
+
+		beforeEach(() => {
+			expectedQueryString = '??fields[root]=propertyOne&fields[object]=propertyOne&include=object'
+		})
+
+		it('should concatenate the converted schema', () => {
+			const { result } = renderHook(() =>
+				useUrlQuery({
+					schemaToQueryString: {
+						schema: schema,
+						rootResource: 'root',
+					}
+				})
+			);
+
+			expect(result.current.queryString).toBe(expectedQueryString)
+		})
+
+		const cases = [
+			[undefined, undefined],
+			[undefined, "fieldsKey"],
+			["includeKey", undefined],
+			["includeKey", "fieldsKey"],
+		]
+
+		it.each(cases)('should repass keys %s and %s', (includeKey, fieldsKey) => {
+			const { result } = renderHook(() =>
+				useUrlQuery({
+					schemaToQueryString: {
+						schema: schema,
+						rootResource: 'root',
+						includeKey: includeKey,
+						fieldsKey: fieldsKey
+					}
+				})
+			);
+
+			if (includeKey) {
+				expectedQueryString = expectedQueryString.replaceAll("include", includeKey)
+			}
+
+			if (fieldsKey) {
+				expectedQueryString = expectedQueryString.replaceAll("fields", fieldsKey)
+			}
+
+			expect(result.current.queryString).toBe(expectedQueryString)
+		})
+	})
+});
+
+describe("fields", () => {
+
+})
+
+describe("filters", () => {
+
+})
+
+describe('include', () => {
+	describe('addInclude', () => {
+		const { result: { current: urlQuery } } = renderHook(() =>
+			useUrlQuery()
+		);
+	});
+
+	describe('removeInclude', () => {
+		const { result: { current: urlQuery } } = renderHook(() =>
+			useUrlQuery()
+		);
+	});
+});
+
+describe('page', () => {
+	it.each([
+		[null, null],
+		[1, 1],
+		[5, 5],
+	])('when set page state as %i, page state should return "%s"', (page, state) => {
+		const { result } = renderHook(() =>
+			useUrlQuery()
+		);
+
+		act(() => {
+			result.current.setPage(page);
+		});
+
+		expect(result.current.page).toBe(state);
+	});
+
+	it("removePage", () => {
+		const { result } = renderHook(() =>
+			useUrlQuery()
+		);
+
+		act(() => {
+			result.current.removePage();
+		});
+
+		expect(result.current.page).toBe(null);
+	});
+});
+
+describe('perPage', () => {
+	it.each([
+		[null, null],
+		[10, 10],
+		[25, 25],
+	])('when set perPage state as %i, perPage state should return "%s"', (perPage, state) => {
+		const { result } = renderHook(() =>
+			useUrlQuery()
+		);
+
+		act(() => {
+			result.current.setPerPage(perPage);
+		});
+
+		expect(result.current.perPage).toBe(state);
+	});
+
+	it("removePerPage", () => {
+		const { result } = renderHook(() =>
+			useUrlQuery()
+		);
+
+		act(() => {
+			result.current.removePerPage();
+		});
+
+		expect(result.current.perPage).toBe(null);
+	});
 });
 
 describe('sort', () => {
@@ -408,80 +555,6 @@ describe('sort', () => {
 		});
 	});
 })
-
-describe('include', () => {
-	describe('addInclude', () => {
-		const { result: { current: urlQuery } } = renderHook(() =>
-			useUrlQuery()
-		);
-	});
-
-	describe('removeInclude', () => {
-		const { result: { current: urlQuery } } = renderHook(() =>
-			useUrlQuery()
-		);
-	});
-});
-
-describe('page', () => {
-	it.each([
-		[null, null],
-		[1, 1],
-		[5, 5],
-	])('when set page state as %i, page state should return "%s"', (page, state) => {
-		const { result } = renderHook(() =>
-			useUrlQuery()
-		);
-
-		act(() => {
-			result.current.setPage(page);
-		});
-
-		expect(result.current.page).toBe(state);
-	});
-
-	it("removePage", () => {
-		const { result } = renderHook(() =>
-			useUrlQuery()
-		);
-
-		act(() => {
-			result.current.removePage();
-		});
-
-		expect(result.current.page).toBe(null);
-	});
-});
-
-describe('perPage', () => {
-	it.each([
-		[null, null],
-		[10, 10],
-		[25, 25],
-	])('when set perPage state as %i, perPage state should return "%s"', (perPage, state) => {
-		const { result } = renderHook(() =>
-			useUrlQuery()
-		);
-
-		act(() => {
-			result.current.setPerPage(perPage);
-		});
-
-		expect(result.current.perPage).toBe(state);
-	});
-
-	it("removePerPage", () => {
-		const { result } = renderHook(() =>
-			useUrlQuery()
-		);
-
-		act(() => {
-			result.current.removePerPage();
-		});
-
-		expect(result.current.perPage).toBe(null);
-	});
-});
 
 describe('query strings', () => {
 	describe('sort', () => {

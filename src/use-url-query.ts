@@ -5,18 +5,18 @@ import z4, { ZodObject, ZodRawShape } from "zod/v4";
 
 type Params<S extends ZodRawShape> = {
 	sorts?: SortParam;
-  normalizeFromUrl?: boolean
-  filterSchema?: ZodObject<S>
-		schemaToQueryString?: {
+	normalizeFromUrl?: boolean
+	filterSchema?: ZodObject<S>
+	schemaToQueryString?: {
 		schema: ZodObject
 		rootResource: string
-		includeKey: string | undefined
-		fieldsKey: string | undefined
+		includeKey?: string
+		fieldsKey?: string
 	}
 }
 
 type FiltersFromSchema<S extends ZodRawShape> = {
-  [K in keyof S]?: z4.infer<S[K]>
+	[K in keyof S]?: z4.infer<S[K]>
 } & Record<string, unknown>
 
 type Direction = '-' | ''
@@ -60,29 +60,6 @@ export function useUrlQuery<S extends z4.ZodRawShape = {}>({
 	schemaToQueryString,
 	filterSchema
 }: Params<S> = {}) {
-	//LIFECYCLE INIT
-	const normalizedSorts: Sort[] = initialSorts.map(Parasort => {
-		const restItem = typeof Parasort === 'string'
-			? { column: Parasort, label: Parasort }
-			: Parasort;
-
-		return {
-			...restItem,
-			direction: '',
-			include: false
-		}
-	});
-
-	let schemaConverted = '';
-	if (schemaToQueryString) {
-		schemaConverted = fnSchemaToQueryString(
-			schemaToQueryString.schema,
-			schemaToQueryString.rootResource,
-			schemaToQueryString.includeKey,
-			schemaToQueryString.fieldsKey,
-		)
-	}
-
 	//FIELDS
 	//FILTER
 	type Filters = FiltersFromSchema<S>
@@ -184,6 +161,18 @@ export function useUrlQuery<S extends z4.ZodRawShape = {}>({
 	}
 
 	//SORT
+	const normalizedSorts: Sort[] = initialSorts.map(Parasort => {
+		const restItem = typeof Parasort === 'string'
+			? { column: Parasort, label: Parasort }
+			: Parasort;
+
+		return {
+			...restItem,
+			direction: '',
+			include: false
+		}
+	});
+
 	const [sorts, setSorts] = useState<Sort[]>(normalizedSorts);
 
 	const sortString = useMemo(() => sorts.filter(sort => sort.include).map(sort => sort.direction + sort.column)
@@ -280,6 +269,16 @@ export function useUrlQuery<S extends z4.ZodRawShape = {}>({
 	// function enableSorts() { }
 
 	//QUERY STRING
+	let schemaConverted = '';
+	if (schemaToQueryString) {
+		schemaConverted = fnSchemaToQueryString(
+			schemaToQueryString.schema,
+			schemaToQueryString.rootResource,
+			schemaToQueryString.includeKey,
+			schemaToQueryString.fieldsKey,
+		)
+	}
+
 	const queryString = useMemo(() => {
 		const parts = [filtersQueryString, sortQueryString, includeQueryString, pageQueryString, perPageQueryString, schemaConverted].filter(Boolean);
 		return parts.length ? '?' + parts.join('&') : '';
