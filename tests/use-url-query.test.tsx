@@ -60,7 +60,7 @@ Query Strings
 	queryString
 */
 
-describe("field", () => {
+describe("fields", () => {
 
 })
 
