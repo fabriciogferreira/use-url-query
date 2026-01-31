@@ -1,14 +1,9 @@
-import { Sort, useUrlQuery } from "../src/use-url-query";
+import { Sort, SortParam, useUrlQuery } from "../src/use-url-query";
 import { describe, expect, it, mock } from "bun:test";
 import { renderHook, act } from "@testing-library/react";
 import fastCartesian from 'fast-cartesian'
 import { Permutation, PowerSet, } from 'js-combinatorics';
 import z4 from "zod/v4";
-
-//Criar função que gere todas as combinações possíveis de sorts com essas configurações:
-// ordem importa? &
-// (size | min | max | min & max) ?
-// includeVoid? 
 
 let mockedSearchParams: URLSearchParams;
 
@@ -36,44 +31,100 @@ function subsets<T>(arr: T[]): T[][] {
 	return result;
 }
 
-// useUrlQuery
-// 	params
-// 		obrigatoriedade do objetos params
-// 	funções
-// 	states
-// 	retorno
-
-//Regras globais para filtros:
-//Nem sempre um filtro estará presente na URL, ou seja, todos os filtros são opcionais
-
-
-//Regras
-//Obrigar ele a passar todas as propriedades como opcionais
-
 // TESTES FUTUROS
 //E SE EU PASSAR FILTROS DUPLICADOS?
-
-it('should return undefined when field is missing', () => {
-	mockedSearchParams = new URLSearchParams('');
-
-	const { result } = renderHook(() =>
-		useUrlQuery({
-			normalizeFromUrl: true,
-			filterSchema: z4.object({
-				number: z4.number(),
-			})
-		})
-	);
-
-	expect(result.current.filters.number).toEqual(undefined);
-})
+/**
+Sctrutcure:
+Params
+	Sorts
+	normalizeFromUrl
+	filterSchema
+		schemaToQueryString
+		schema
+		includeKey
+		fieldsKey
+Field
+Filter
+	filters
+	filtersQueryString
+	addFilter
+	removeFilter
+Include
+	includes
+	includeString
+	includeQueryString
+	addInclude
+	removeInclude
+Page
+	page
+	pageString
+	pageQueryString
+	removePage
+PerPage
+	perPage
+	perPageString
+	perPageQueryString
+	removePerPage
+Sort
+	sorts
+	sortString
+	sortQueryString
+	hasSort
+	isSortAsc
+	isSortDesc
+	moveSortUp
+	moveSortDown
+	toggleSort
+	toggleSortDirection
+Query Strings
+	queryString
+*/
 
 describe('params', () => {
-	describe('normalizeFromUrl', () => {
-		const filters = [['string', 'a'], ['number', '1'], ['boolean', 'true'], ['array', 'a,b,c'], ['null', '']]
+	describe('sorts', () => {
+		const cases: [SortParam, Sort[]][] = [
+			[
+				["asc", "desc"],
+				[
+					{ column: 'asc', label: 'asc', direction: '', include: false },
+					{ column: 'desc', label: 'desc', direction: '', include: false }
+				]
+			],
+			[
+				[
+					{ column: 'asc', label: 'Ascending' },
+					{ column: 'desc', label: 'Descending' }
+				],
+				[
+					{ column: 'asc', label: 'Ascending', direction: '', include: false },
+					{ column: 'desc', label: 'Descending', direction: '', include: false }
+				]
+			]
+		]
+		it.each(cases)('should initialize sorts correctly', (inputSorts, expectedSorts) => {
+			const { result } = renderHook(() =>
+				useUrlQuery({
+					sorts: inputSorts
+				})
+			);
 
+			expect(result.current.sorts).toEqual(expectedSorts);
+		});
+	});
+
+	describe('normalizeFromUrl', () => {
 		describe('filters', () => {
-			const cases: [string, string[][]][] = subsets(filters).map((subset) => [subset.map(subsubset => subsubset.join('=')).join('&'), subset]);
+			const filters = [
+				['string', 'a'],
+				['number', '1'],
+				['boolean', 'true'],
+				['array', 'a,b,c'],
+				['null', '']
+			]
+
+			const cases: [string, string[][]][] = subsets(filters)
+				.map((subset) => [subset.map(subsubset => subsubset.join('='))
+					.join('&'), subset]);
 
 			it.each(cases)('when query string is %s', (_, params: string[][]) => {
 				const queryString = params.map(([key, value]) => `filter[${key}]=${value}`).join('&');
@@ -94,113 +145,87 @@ describe('params', () => {
 
 				expect(result.current.filters).toEqual(expectedFilters);
 			})
+
+			it('should return undefined when field is missing', () => {
+				mockedSearchParams = new URLSearchParams('');
+
+				const { result } = renderHook(() =>
+					useUrlQuery({
+						normalizeFromUrl: true,
+						filterSchema: z4.object({
+							number: z4.number(),
+						})
+					})
+				);
+
+				expect(result.current.filters.number).toEqual(undefined);
+			})
 		});
 
 		describe('sorts', () => {
-
 			const powerSets = [...new PowerSet('abcde')]
 
-			const cases: [string, string[]][] = powerSets.map(powerSet => [powerSet.join(','), powerSet])
+			const combinations: [string, string][][] = []
 
-			//TODO: testar combinações com direções
-			describe.each(cases)('when query string has %s sorts', (queryString, sortings: string[]) => {
-				it('should change state include sorting from ' + queryString, () => {
-					mockedSearchParams = new URLSearchParams(`sort=${queryString}`);
+			powerSets.map((set, index) => {
+				//FOR VOID CASE
+				if (index === 0) {
+					combinations.push([])
+					return
+				}
 
-					const { result } = renderHook(() =>
-						useUrlQuery({
-							normalizeFromUrl: true,
-							sorts: ["a", "b", "c"]
-						})
-					);
+				//MAKE POSSIBLE DIRECTIONS
+				const sortingsWithDirection = set.map(sorting => fastCartesian([['', '-'], [sorting]]))
 
-					const validSortings = sortings.filter(param => ["a", "b", "c"].includes(param));
+				//MAKE COMBINATIONS sortingsWithDirectionA x sortingsWithDirectionB
+				//EX: [[["", "a"], ["-", "a"]], [["", "b"], ["-", "b"]]] =>
+				//[[["", "a"], ["", "b"]], [["", "a"], ["-", "b"]], [["-", "a"], ["", "b"]], [["-", "a"], ["-", "b"]]]
+				const cartesian = fastCartesian(sortingsWithDirection);
 
-					const expectedSorts: Sort[] = validSortings.map(param => {
-						return {
-							column: param,
-							label: param,
-							direction: '',
-							include: true
-						}
-					});
+				// PERMUTATION IS COMBINATIONS FOR ALL ORDERS
+				//FOR EACH COMBINATION FROM sortingsWithDirectionA x sortingsWithDirectionB GENERATE COMBINATION WHERE ORDER MATTER
+				//EX: [[ "", "a" ], [ "", "b" ]] => [[ "", "a" ], [ "", "b" ], [ "", "b" ], [ "", "a" ]]
+				const permutation = cartesian.flatMap(group => {
+					return [...new Permutation(group)]
+				});
 
-					expect(result.current.sorts.filter(sort => sort.include)).toEqual(expectedSorts);
-				})
+				combinations.push(...permutation)
+			})
 
-				const sortingsWithDirection = sortings.map(sorting => fastCartesian([['', '-'], [sorting]]))
+			const cases: [string, string[][]][] = combinations.map(combination => [
+				combination.map((sortConfig => sortConfig.join(''))).join(),
+				combination
+			])
 
-				const teste = fastCartesian(sortingsWithDirection);
+			it.each(cases)('when query string is %s', (queryString, sortings: string[][]) => {
+				mockedSearchParams = new URLSearchParams(`sort=${queryString}`);
 
-				const permuted = teste.flatMap(group =>
-					[...new Permutation(group)]
+				const sorts: Record<string, string> = {};
+
+				sortings.flatMap(sort => {
+					if (["a", "b", "c"].includes(sort[1])) {
+						sorts[sort[1]] = sort[0];
+					}
+				});
+
+				const { result } = renderHook(() =>
+					useUrlQuery({
+						normalizeFromUrl: true,
+						sorts: ["a", "b", "c"]
+					})
 				);
 
-				const cases2: [string, string[][]][] = permuted.map(permutation => [permutation.map(sort => sort.filter(Boolean).join('')).join(','), permutation]);
-
-				it.each([
-					['', []],
-					...cases2
-				])('should fix the order of sorts from query string when sort is %s', (queryString, sortings) => {
-					mockedSearchParams = new URLSearchParams(`sort=${queryString}`);
-
-					const sorts: Record<string, string> = {};
-
-					sortings.flatMap(sort => {
-						if (["a", "b", "c"].includes(sort[1])) {
-							sorts[sort[1]] = sort[0];
-						}
-					});
-
-					const { result } = renderHook(() =>
-						useUrlQuery({
-							normalizeFromUrl: true,
-							sorts: ["a", "b", "c"]
-						})
-					);
-
-					const validSortings: Sort[] = Object.entries(sorts).map(([key, value]) => {
-						return ({
-							column: key,
-							label: key,
-							direction: value as '' | '-',
-							include: true
-						})
-					});
-
-					expect(result.current.sorts.filter(sort => sort.include)).toEqual(validSortings);
+				const validSortings: Sort[] = Object.entries(sorts).map(([key, value]) => {
+					return ({
+						column: key,
+						label: key,
+						direction: value as '' | '-',
+						include: true
+					})
 				});
-			});
-		});
-	});
-	describe('sorts', () => {
-		it('should initialize sorts correctly without label', () => {
-			const { result: { current: urlQuery } } = renderHook(() =>
-				useUrlQuery({
-					sorts: ["asc", "desc"]
-				})
-			);
 
-			expect(urlQuery.sorts).toEqual([
-				{ column: 'asc', label: 'asc', direction: '', include: false },
-				{ column: 'desc', label: 'desc', direction: '', include: false }
-			]);
-		});
-
-		it('should initialize sorts correctly with label', () => {
-			const { result: { current: urlQuery } } = renderHook(() =>
-				useUrlQuery({
-					sorts: [
-						{ column: 'asc', label: 'Ascending' },
-						{ column: 'desc', label: 'Descending' }
-					]
-				})
-			);
-
-			expect(urlQuery.sorts).toEqual([
-				{ column: 'asc', label: 'Ascending', direction: '', include: false },
-				{ column: 'desc', label: 'Descending', direction: '', include: false }
-			]);
+				expect(result.current.sorts.filter(sort => sort.include)).toEqual(validSortings);
+			})
 		});
 	});
 });

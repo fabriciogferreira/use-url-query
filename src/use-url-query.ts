@@ -28,7 +28,7 @@ export type Sort = {
 	include: boolean;
 }
 
-type SortParam = Pick<Sort, 'column' | 'label'>[] | Sort['column'][]
+export type SortParam = Pick<Sort, 'column' | 'label'>[] | Sort['column'][]
 
 //FIELDS
 //FILTER
