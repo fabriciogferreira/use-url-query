@@ -3,8 +3,8 @@ import { beforeEach, describe, expect, it, mock } from "bun:test";
 import { renderHook, act } from "@testing-library/react";
 import fastCartesian from 'fast-cartesian'
 import { Permutation, PowerSet, } from 'js-combinatorics';
-import z4, { object, property, z } from "zod/v4";
-import { combinations, powerSet } from "../src/combine";
+import z4 from "zod/v4";
+import { powerSet } from "../src/combine";
 
 let mockedSearchParams: URLSearchParams;
 
@@ -119,24 +119,76 @@ describe("filter", () => {
 
 describe('include', () => {
 	describe('addInclude', () => {
-		const { result: { current: urlQuery } } = renderHook(() =>
-			useUrlQuery()
-		);
+		it.each([
+			['', ''],
+			[['author'], 'author'],
+			// [['author', 'comments'], 'author,comments'],
+		])('when set includes state as %s, includeString should return "%s"', (includes, includeString) => {
+			const { result } = renderHook(() =>
+				useUrlQuery()
+			);
+
+			act(() => {
+				result.current.addInclude(includes);
+			});
+
+			expect(result.current.includeString).toBe(includeString);
+		})
+
+		it.each([
+			['', ''],
+			[['author'], 'include=author'],
+			[['author', 'comments'], 'include=author,comments'],
+		])('when set includes state as %s, includeQueryString should return "%s"', (includes, includeQueryString) => {
+			const { result } = renderHook(() =>
+				useUrlQuery()
+			);
+
+			act(() => {
+				result.current.addInclude(includes);
+			});
+
+			expect(result.current.includeQueryString).toBe(includeQueryString);
+		})
 	});
 
-	describe('removeInclude', () => {
-		const { result: { current: urlQuery } } = renderHook(() =>
+	describe.each([
+		['', '', ''],
+		[[''], ['one'], ''],
+		[['one'], [''], 'one'],
+		[['one', 'two', 'three'], ['one'], 'two,three'],
+		[['one', 'two', 'three'], ['two'], 'one,three'],
+		[['one', 'two', 'three'], ['three'], 'one,two'],
+		[['one', 'two', 'three'], ['one', 'two', 'three'], ''],
+	])('removeInclude %s, %s', (initial, toRemove, expected) => {
+		const { result } = renderHook(() =>
 			useUrlQuery()
 		);
+
+		act(() => {
+			result.current.addInclude(initial);
+		});
+
+		act(() => {
+			result.current.removeInclude(toRemove);
+		});
+
+		it('when set includes state as %s, includeString should return "%s"', () => {
+			expect(result.current.includeString).toBe(expected);
+		})
+
+		it('when set includes state as %s, includeQueryString should return "%s"', () => {
+			expect(result.current.includeQueryString).toBe(expected ? 'include=' + expected : expected);
+		})
 	});
 });
 
 describe('page', () => {
-	it.each([
-		[null, null],
-		[1, 1],
-		[5, 5],
-	])('when set page state as %i, page state should return "%s"', (page, state) => {
+	describe.each([
+		[null],
+		[1],
+		[5],
+	])('setPage', (page) => {
 		const { result } = renderHook(() =>
 			useUrlQuery()
 		);
@@ -145,8 +197,18 @@ describe('page', () => {
 			result.current.setPage(page);
 		});
 
-		expect(result.current.page).toBe(state);
-	});
+		it('state should return "%s"', () => {
+			expect(result.current.page).toBe(page);
+		});
+
+		it('pageString page=%i should return string "%s"', () => {
+			expect(result.current.pageString).toBe(page ? page.toString() : '');
+		});
+
+		it('pageQueryString page=%i should return query string "%s"', () => {
+			expect(result.current.pageQueryString).toBe(page ? 'page=' + page : '');
+		});
+	})
 
 	it("removePage", () => {
 		const { result } = renderHook(() =>
@@ -162,11 +224,11 @@ describe('page', () => {
 });
 
 describe('perPage', () => {
-	it.each([
-		[null, null],
-		[10, 10],
-		[25, 25],
-	])('when set perPage state as %i, perPage state should return "%s"', (perPage, state) => {
+	describe.each([
+		[null],
+		[10],
+		[25],
+	])("setPerPage", (perPage) => {
 		const { result } = renderHook(() =>
 			useUrlQuery()
 		);
@@ -175,16 +237,38 @@ describe('perPage', () => {
 			result.current.setPerPage(perPage);
 		});
 
-		expect(result.current.perPage).toBe(state);
-	});
+		it('perPage state should return ' + perPage, () => {
+			expect(result.current.perPage).toBe(perPage);
+		});
 
-	it("removePerPage", () => {
+		it('perPageString should return string ' + perPage, () => {
+			expect(result.current.perPageString).toBe(perPage ? perPage.toString() : '');
+		});
+
+		it('perPageQueryString should return query string perPage=' + perPage, () => {
+			expect(result.current.perPageQueryString).toBe(perPage ? 'perPage=' + perPage : '');
+		});
+	})
+
+	describe("removePerPage", () => {
 		const { result } = renderHook(() =>
 			useUrlQuery()
 		);
 
 		act(() => {
 			result.current.removePerPage();
+		});
+
+		it('perPage state should return ' + null, () => {
+			expect(result.current.perPage).toBe(null);
+		});
+
+		it('perPageString should return string', () => {
+			expect(result.current.perPageString).toBe('');
+		});
+
+		it('perPageQueryString should return query string', () => {
+			expect(result.current.perPageQueryString).toBe('');
 		});
 
 		expect(result.current.perPage).toBe(null);
@@ -287,6 +371,28 @@ describe('sort', () => {
 
 			expect(result.current.sorts.filter(sort => sort.include)).toEqual(validSortings);
 		})
+	})
+
+	describe('state', () => {
+		const { result } = renderHook(() =>
+			useUrlQuery({
+				sorts: ["asc", "desc"]
+			})
+		);
+
+		act(() => {
+			result.current.toggleSort('asc');
+			result.current.toggleSort('desc');
+		});
+
+		it('should return correct sort string', () => {
+			expect(result.current.sortString).toBe('asc,desc');
+		});
+
+		it('should return correct sort query string', () => {
+
+			expect(result.current.sortQueryString).toBe('sort=asc,desc');
+		});
 	})
 
 	const sorts = ['1', '2', '3', '4', '5'];
@@ -467,174 +573,8 @@ describe('sort', () => {
 	});
 })
 
-describe('query strings', () => {
-	describe('sort', () => {
-		const { result } = renderHook(() =>
-			useUrlQuery({
-				sorts: ["asc", "desc"]
-			})
-		);
-
-		it('should return correct sort string', () => {
-			act(() => {
-				result.current.toggleSort('asc');
-				result.current.toggleSort('desc');
-			});
-			expect(result.current.sortString).toBe('asc,desc');
-		});
-
-		it('should return correct sort query string', () => {
-			act(() => {
-				result.current.toggleSort('asc');
-				result.current.toggleSort('desc');
-			});
-			expect(result.current.sortQueryString).toBe('sort=asc,desc');
-		});
-	});
-
-	describe('include', () => {
-		describe('addInclude', () => {
-			it.each([
-				['', ''],
-				[['author'], 'author'],
-				// [['author', 'comments'], 'author,comments'],
-			])('when set includes state as %s, includeString should return "%s"', (includes, includeString) => {
-				const { result } = renderHook(() =>
-					useUrlQuery()
-				);
-
-				act(() => {
-					result.current.addInclude(includes);
-				});
-
-				expect(result.current.includeString).toBe(includeString);
-			})
-
-			it.each([
-				['', ''],
-				[['author'], 'include=author'],
-				[['author', 'comments'], 'include=author,comments'],
-			])('when set includes state as %s, includeQueryString should return "%s"', (includes, includeQueryString) => {
-				const { result } = renderHook(() =>
-					useUrlQuery()
-				);
-
-				act(() => {
-					result.current.addInclude(includes);
-				});
-
-				expect(result.current.includeQueryString).toBe(includeQueryString);
-			})
-		});
-
-		describe.each([
-			['', '', ''],
-			[[''], ['one'], ''],
-			[['one'], [''], 'one'],
-			[['one', 'two', 'three'], ['one'], 'two,three'],
-			[['one', 'two', 'three'], ['two'], 'one,three'],
-			[['one', 'two', 'three'], ['three'], 'one,two'],
-			[['one', 'two', 'three'], ['one', 'two', 'three'], ''],
-		])('removeInclude %s, %s', (initial, toRemove, expected) => {
-			const { result } = renderHook(() =>
-				useUrlQuery()
-			);
-
-			act(() => {
-				result.current.addInclude(initial);
-			});
-
-			act(() => {
-				result.current.removeInclude(toRemove);
-			});
-
-			it('when set includes state as %s, includeString should return "%s"', () => {
-				expect(result.current.includeString).toBe(expected);
-			})
-
-			it('when set includes state as %s, includeQueryString should return "%s"', () => {
-				expect(result.current.includeQueryString).toBe(expected ? 'include=' + expected : expected);
-			})
-		});
-	});
-
-	describe('page', () => {
-		describe('pageString', () => {
-			it.each([
-				[null, ''],
-				[1, '1'],
-				[5, '5'],
-			])('page=%i should return string "%s"', (page, pageString) => {
-				const { result } = renderHook(() =>
-					useUrlQuery()
-				);
-
-				act(() => {
-					result.current.setPage(page);
-				});
-
-				expect(result.current.pageString).toBe(pageString);
-			});
-		});
-
-		describe('pageQueryString', () => {
-			it.each([
-				[null, ''],
-				[1, 'page=1'],
-				[5, 'page=5'],
-			])('page=%i should return query string "%s"', (page, pageQueryString) => {
-				const { result } = renderHook(() =>
-					useUrlQuery()
-				);
-
-				act(() => {
-					result.current.setPage(page);
-				});
-
-				expect(result.current.pageQueryString).toBe(pageQueryString);
-			});
-		});
-	});
-
-	describe('perPage', () => {
-		describe('perPageString', () => {
-			it.each([
-				[null, ''],
-				[10, '10'],
-				[25, '25'],
-			])('perPage=%i should return string "%s"', (perPage, perPageString) => {
-				const { result } = renderHook(() =>
-					useUrlQuery()
-				);
-
-				act(() => {
-					result.current.setPerPage(perPage);
-				});
-
-				expect(result.current.perPageString).toBe(perPageString);
-			});
-		});
-
-		describe('perPageQueryString', () => {
-			it.each([
-				[null, ''],
-				[10, 'perPage=10'],
-				[25, 'perPage=25'],
-			])('perPage=%i should return query string "%s"', (perPage, perPageQueryString) => {
-				const { result } = renderHook(() =>
-					useUrlQuery()
-				);
-
-				act(() => {
-					result.current.setPerPage(perPage);
-				});
-
-				expect(result.current.perPageQueryString).toBe(perPageQueryString);
-			});
-		});
-	});
-
-	describe('queryString', () => {
+describe('query string', () => {
+	describe('state', () => {
 		const cases = powerSet(['filter', 'sort', 'include', 'page', 'perPage']).map((subset): [string, string, string[]] => {
 			let parts: string[] = []
 
@@ -712,9 +652,9 @@ describe('query strings', () => {
 		//TODO: FORNECER UM SCHEMA BASE, STRING E QUERY STRING PARA QUE PESSOAS QUE UTLIZEM A LIB POSSAM TESTAR MAIS FACILMENTE 
 		//TODO: FORNECER TIPOS PARA QUE OUTRAS PESSOAS POSSAM ACOPLAR A FUNÇÃO MAIS FACILMENTE EM SEUS HOOK
 		const schema = z4.object({
-			propertyOne: z.string(),
-			object: z.object({
-				propertyOne: z.number()
+			propertyOne: z4.string(),
+			object: z4.object({
+				propertyOne: z4.number()
 			})
 		})
 
