@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from "react"
+import { useMemo, useState, useEffect, useRef } from "react"
 import { useRouter } from 'next/router'
 import { useSearchParams } from "next/navigation";
 import { schemaToQueryString as fnSchemaToQueryString } from "@fabriciogferreira/schema-to-query-string";
@@ -35,6 +35,7 @@ export type SortParam = Pick<Sort, 'column' | 'label'>[] | Sort['column'][]
 //FILTER
 type AddFilter = (column: string, value: unknown) => void;
 type RemoveFilter = (column: string, value: unknown) => void;
+type AddFilterDebounced = (column: string, value: unknown, timeout?: number) => void;
 //INCLUDE
 type AddInclude = (includes: string | string[]) => void;
 type RemoveInclude = (includes: string | string[]) => void;
@@ -62,6 +63,8 @@ export function useUrlQuery<S extends z4.ZodRawShape = {}>({
 	filterSchema
 }: Params<S> = {}) {
 	const router = useRouter();
+	const filterDebouncedTimeoutId = useRef<NodeJS.Timeout>(undefined);
+
 	//FIELDS
 	//FILTER
 	type Filters = FiltersFromSchema<S>
@@ -106,6 +109,14 @@ export function useUrlQuery<S extends z4.ZodRawShape = {}>({
 			return newFilters
 		});
 	}
+
+	const addFilterDebounced: AddFilterDebounced = (column: string, value: unknown, timeout: number = 300) => {
+		clearTimeout(filterDebouncedTimeoutId.current);
+
+		filterDebouncedTimeoutId.current = setTimeout(() => {			
+			addFilter(column, value);
+		}, timeout);
+	};
 
 	//INCLUDE
 	const [includes, setIncludes] = useState<string[]>([]);
@@ -379,6 +390,7 @@ export function useUrlQuery<S extends z4.ZodRawShape = {}>({
 		filtersQueryString,
 		addFilter,
 		removeFilter,
+		addFilterDebounced,
 		//INCLUDE
 		includes,
 		includeString,

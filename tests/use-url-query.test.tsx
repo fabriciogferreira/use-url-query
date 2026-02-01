@@ -1,11 +1,11 @@
 import { Sort, SortParam, useUrlQuery } from "../src/use-url-query";
-import { beforeEach, describe, expect, it, mock } from "bun:test";
+import { afterEach, beforeEach, describe, expect, it, mock } from "bun:test";
 import { renderHook, act } from "@testing-library/react";
 import fastCartesian from 'fast-cartesian'
 import { Permutation, PowerSet, } from 'js-combinatorics';
 import z4 from "zod/v4";
 import { powerSet } from "../src/combine";
-
+import { jest } from "bun:test";
 let mockedSearchParams: URLSearchParams;
 let pushSpy: ReturnType<typeof mock>
 
@@ -122,6 +122,73 @@ describe("filter", () => {
 				);
 
 				expect(result.current.filters.number).toEqual(undefined);
+			})
+		});
+	});
+
+	describe('addFilterDebounced', () => {
+		beforeEach(() => {
+			jest.useFakeTimers()
+		})
+
+		afterEach(() => {
+			jest.useRealTimers()
+		})
+
+		it('should add filter after timeout', () => {
+			const { result } = renderHook(() => useUrlQuery())
+
+			act(() => {
+				result.current.addFilterDebounced('name', 'John', 400)
+			})
+
+			expect(result.current.filters).toEqual({})
+
+			act(() => {
+				jest.advanceTimersByTime(400)
+			})
+
+			expect(result.current.filters).toEqual({
+				name: 'John'
+			})
+		})
+
+		it('should apply last call', async () => {
+			const { result } = renderHook(() => useUrlQuery())
+
+			act(() => {
+				result.current.addFilterDebounced('name', 'J', 200)
+				result.current.addFilterDebounced('name', 'Jo', 500)
+				result.current.addFilterDebounced('name', 'John', 300)
+			})
+
+			expect(result.current.filters).toEqual({})
+
+			act(() => {
+				jest.advanceTimersByTime(500)
+			})
+
+			expect(result.current.filters).toEqual({
+				name: 'John'
+			})
+		});
+
+		it('should have 300ms default timeout', () => {
+			//TODO: TESTE QUEBRA SE FOR MENOR QUE 300MS
+			const { result } = renderHook(() => useUrlQuery())
+
+			act(() => {
+				result.current.addFilterDebounced('name', 'John')
+			})
+
+			expect(result.current.filters).toEqual({})
+
+			act(() => {
+				jest.advanceTimersByTime(300)
+			})
+
+			expect(result.current.filters).toEqual({
+				name: 'John'
 			})
 		});
 	});
