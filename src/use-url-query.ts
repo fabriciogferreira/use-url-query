@@ -1,19 +1,14 @@
 import { useMemo, useState, useEffect, useRef } from "react"
 import { useRouter } from 'next/router'
 import { useSearchParams } from "next/navigation";
-import { schemaToQueryString as fnSchemaToQueryString } from "@fabriciogferreira/schema-to-query-string";
+import { schemaToQueryString as fnSchemaToQueryString, SchemaToQueryStringConfig } from "@fabriciogferreira/schema-to-query-string";
 import z4, { ZodObject, ZodRawShape } from "zod/v4";
 
 type Params<S extends ZodRawShape> = {
 	sorts?: SortParam;
 	normalizeFromUrl?: boolean
 	filterSchema?: ZodObject<S>
-	schemaToQueryString?: {
-		schema: ZodObject
-		rootResource: string
-		includeKey?: string
-		fieldsKey?: string
-	}
+	schemaToQueryString?: SchemaToQueryStringConfig
 }
 
 type FiltersFromSchema<S extends ZodRawShape> = {
@@ -284,12 +279,16 @@ export function useUrlQuery<S extends z4.ZodRawShape = {}>({
 	//QUERY STRING
 	let schemaConverted = '';
 	if (schemaToQueryString) {
-		schemaConverted = fnSchemaToQueryString(
+		const {
+			string: resultSchemaConverted,
+		} = fnSchemaToQueryString(
 			schemaToQueryString.schema,
 			schemaToQueryString.rootResource,
 			schemaToQueryString.includeKey,
 			schemaToQueryString.fieldsKey,
 		)
+
+		schemaConverted = resultSchemaConverted;
 	}
 
 	const queryString = useMemo(() => {

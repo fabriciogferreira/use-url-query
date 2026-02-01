@@ -23,7 +23,7 @@
 		"typescript": "^5.9.3"
 	},
 	"dependencies": {
-		"@fabriciogferreira/schema-to-query-string": "^0.1.5",
+		"@fabriciogferreira/schema-to-query-string": "^0.1.8",
 		"fast-cartesian": "^9.0.1",
 		"js-combinatorics": "^2.1.2",
 		"next": "^16.1.1",

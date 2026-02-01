@@ -1,11 +1,12 @@
 import { Sort, SortParam, useUrlQuery } from "../src/use-url-query";
-import { afterEach, beforeEach, describe, expect, it, mock } from "bun:test";
+import { afterEach, beforeEach, describe, expect, it, mock, jest } from "bun:test";
 import { renderHook, act } from "@testing-library/react";
 import fastCartesian from 'fast-cartesian'
 import { Permutation, PowerSet, } from 'js-combinatorics';
 import z4 from "zod/v4";
 import { powerSet } from "../src/combine";
-import { jest } from "bun:test";
+import { schemaForTest, expectedQueryStringForTest } from "@fabriciogferreira/schema-to-query-string";
+
 let mockedSearchParams: URLSearchParams;
 let pushSpy: ReturnType<typeof mock>
 
@@ -726,26 +727,17 @@ describe('query string', () => {
 	});
 
 	describe('schemaToQueryString', () => {
-		//TODO: FORNECER UM SCHEMA BASE, STRING E QUERY STRING PARA QUE PESSOAS QUE UTLIZEM A LIB POSSAM TESTAR MAIS FACILMENTE 
-		//TODO: FORNECER TIPOS PARA QUE OUTRAS PESSOAS POSSAM ACOPLAR A FUNÇÃO MAIS FACILMENTE EM SEUS HOOK
-		const schema = z4.object({
-			propertyOne: z4.string(),
-			object: z4.object({
-				propertyOne: z4.number()
-			})
-		})
-
 		let expectedQueryString = ''
 
 		beforeEach(() => {
-			expectedQueryString = '??fields[root]=propertyOne&fields[object]=propertyOne&include=object'
+			expectedQueryString = expectedQueryStringForTest
 		})
 
 		it('should concatenate the converted schema', () => {
 			const { result } = renderHook(() =>
 				useUrlQuery({
 					schemaToQueryString: {
-						schema: schema,
+						schema: schemaForTest,
 						rootResource: 'root',
 					}
 				})
@@ -765,7 +757,7 @@ describe('query string', () => {
 			const { result } = renderHook(() =>
 				useUrlQuery({
 					schemaToQueryString: {
-						schema: schema,
+						schema: schemaForTest,
 						rootResource: 'root',
 						includeKey: includeKey,
 						fieldsKey: fieldsKey

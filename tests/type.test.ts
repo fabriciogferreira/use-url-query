@@ -4,10 +4,20 @@ import { renderHook} from "@testing-library/react";
 import z4 from "zod/v4";
 
 let mockedSearchParams: URLSearchParams;
+let pushSpy: ReturnType<typeof mock>
+
+pushSpy = mock(() => { })
 
 mock.module("next/navigation", () => ({
 	useSearchParams: () => mockedSearchParams,
 }));
+
+mock.module('next/router', () => ({
+	useRouter: () => ({
+		push: pushSpy,
+	}),
+}))
+
 
 it('check type expected', () => {
 	mockedSearchParams = new URLSearchParams('');

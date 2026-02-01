@@ -5,7 +5,7 @@
     "": {
       "name": "@fabriciogferreira/use-url-query",
       "dependencies": {
-        "@fabriciogferreira/schema-to-query-string": "^0.1.5",
+        "@fabriciogferreira/schema-to-query-string": "^0.1.8",
         "fast-cartesian": "^9.0.1",
         "js-combinatorics": "^2.1.2",
         "next": "^16.1.1",
@@ -30,7 +30,7 @@
 
     "@emnapi/runtime": ["@emnapi/runtime@1.8.1", "", { "dependencies": { "tslib": "^2.4.0" } }, "sha512-mehfKSMWjjNol8659Z8KxEMrdSJDDot5SXMq00dM8BN4o+CLNXQ0xH2V7EchNHV4RmbZLmmPdEaXZc5H2FXmDg=="],
 
-    "@fabriciogferreira/schema-to-query-string": ["@fabriciogferreira/schema-to-query-string@0.1.5", "", { "peerDependencies": { "zod": "^4.3.5" } }, "sha512-wIlM/LzVVyprX9+DWUq5KRkAoxKAu8rMJT5RiPiCAAzHTFiGFfCctUaVRR5DsOtVd44Aewvty5fNsRbxsQ0gkw=="],
+    "@fabriciogferreira/schema-to-query-string": ["@fabriciogferreira/schema-to-query-string@0.1.8", "", { "peerDependencies": { "zod": "^4.3.5" } }, "sha512-rdOvKzcWEYNNztIiZWN3QhPtGPZVEo+LjY5p9zMI90qKNKYS40LSHFG1IS+70MtSHTrN8Azao6LArSFn/5fRYg=="],
 
     "@happy-dom/global-registrator": ["@happy-dom/global-registrator@20.0.11", "", { "dependencies": { "@types/node": "^20.0.0", "happy-dom": "^20.0.11" } }, "sha512-GqNqiShBT/lzkHTMC/slKBrvN0DsD4Di8ssBk4aDaVgEn+2WMzE6DXxq701ndSXj7/0cJ8mNT71pM7Bnrr6JRw=="],
 
