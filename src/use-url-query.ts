@@ -1,4 +1,5 @@
 import { useMemo, useState, useEffect } from "react"
+import { useRouter } from 'next/router'
 import { useSearchParams } from "next/navigation";
 import { schemaToQueryString as fnSchemaToQueryString } from "@fabriciogferreira/schema-to-query-string";
 import z4, { ZodObject, ZodRawShape } from "zod/v4";
@@ -60,6 +61,7 @@ export function useUrlQuery<S extends z4.ZodRawShape = {}>({
 	schemaToQueryString,
 	filterSchema
 }: Params<S> = {}) {
+	const router = useRouter();
 	//FIELDS
 	//FILTER
 	type Filters = FiltersFromSchema<S>
@@ -283,6 +285,10 @@ export function useUrlQuery<S extends z4.ZodRawShape = {}>({
 		const parts = [filtersQueryString, sortQueryString, includeQueryString, pageQueryString, perPageQueryString, schemaConverted].filter(Boolean);
 		return parts.length ? '?' + parts.join('&') : '';
 	}, [filtersQueryString, sortQueryString, includeQueryString, pageQueryString, perPageQueryString]);
+
+	useEffect(() => {
+		router.push(queryString)
+	}, [queryString, router])
 
 	//LIFECYCLE
 	useEffect(() => {

@@ -7,10 +7,20 @@ import z4 from "zod/v4";
 import { powerSet } from "../src/combine";
 
 let mockedSearchParams: URLSearchParams;
+let pushSpy: ReturnType<typeof mock>
+
+pushSpy = mock(() => { })
 
 mock.module("next/navigation", () => ({
 	useSearchParams: () => mockedSearchParams,
 }));
+
+mock.module('next/router', () => ({
+	useRouter: () => ({
+		push: pushSpy,
+	}),
+}))
+
 
 // TESTES FUTUROS
 //E SE EU PASSAR FILTROS DUPLICADOS?
@@ -99,7 +109,7 @@ describe("filter", () => {
 				expect(result.current.filters).toEqual(expectedFilters);
 			})
 
-			it('should return undefined when field is missing', () => {
+			it('should return undefined when filter is missing', () => {
 				mockedSearchParams = new URLSearchParams('');
 
 				const { result } = renderHook(() =>
@@ -705,6 +715,28 @@ describe('query string', () => {
 			}
 
 			expect(result.current.queryString).toBe(expectedQueryString)
+		})
+	})
+
+	describe('isUpdateUrl', () => {
+		mockedSearchParams = new URLSearchParams('')
+
+		const { result } = renderHook(() =>
+			useUrlQuery({ normalizeFromUrl: true })
+		)
+
+		act(() => {
+			result.current.addInclude(['include1', 'include2'])
+		})
+
+		it('expect push have been called', () => {
+			expect(pushSpy).toHaveBeenCalled()
+		})
+
+		it('expect push have been called with correct string', () => {
+			expect(pushSpy).toHaveBeenCalledWith(
+				expect.stringContaining('include=include1,include2')
+			)
 		})
 	})
 });
