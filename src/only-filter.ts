@@ -1,66 +1,27 @@
 import { useMemo, useState, useEffect } from "react"
 import { useSearchParams } from "next/navigation";
-import { schemaToQueryString as fnSchemaToQueryString } from "@fabriciogferreira/schema-to-query-string";
 import z4, { ZodObject, ZodType } from "zod/v4";
 
-type Direction = '-' | ''
-
-export type Sort = {
-	column: string;
-	label: string;
-	direction: Direction;
-	include: boolean;
-}
-
-type SortParam = Pick<Sort, 'column' | 'label'>[] | Sort['column'][]
-
-type Params = {
-	sorts?: SortParam;
-	normalizeFromUrl?: boolean;
-	schemaToQueryString?: {
-		schema: ZodObject
-		rootResource: string
-		includeKey: string | undefined
-		fieldsKey: string | undefined
-	}
-	filterSchema?: Record<string, ZodType>
+type Params<S extends z4.ZodRawShape> = {
+	normalizeFromUrl?: boolean
+	filters?: z4.ZodObject<S>
 }
 
 //FILTER
-type Filters = Record<PropertyKey, unknown>;
-type FiltersQueryString = string;
 type AddFilter = (column: string, value: unknown) => void;
 type RemoveFilter = (column: string, value: unknown) => void;
 
+type FiltersFromSchema<S extends z4.ZodRawShape> = {
+	[K in keyof S]?: z4.infer<S[K]>
+} & Record<string, unknown>
 
-export type UseUrlQuery = (params?: Params) => {
-	//FILTER
-	filters: Filters;
-	filtersQueryString: FiltersQueryString;
-	addFilter: AddFilter;
-	removeFilter: RemoveFilter;
-}
-
-export type UseUrlQueryContext = ReturnType<UseUrlQuery>;
-
-export const useUrlQuery: UseUrlQuery = ({
+export function useUrlQuery<S extends z4.ZodRawShape = {}>({
 	normalizeFromUrl = true,
-	schemaToQueryString,
-	filterSchema
-} = {}) => {
-	//LIFECYCLE INIT
-	let schemaConverted = '';
-	if (schemaToQueryString) {
-		schemaConverted = fnSchemaToQueryString(
-			schemaToQueryString.schema,
-			schemaToQueryString.rootResource,
-			schemaToQueryString.includeKey,
-			schemaToQueryString.fieldsKey,
-		)
-	}
-
+	filters
+}: Params<S> = {}) {
 	//FILTER
-	type FilterSchema = z4.infer<typeof filterSchema>
+	type Filters = FiltersFromSchema<S>
+
 	const [filters, setFilters] = useState<Filters>({});
 
 	const filtersQueryString = useMemo(() => {
@@ -111,19 +72,21 @@ export const useUrlQuery: UseUrlQuery = ({
 
 		if (searchParams == undefined) return
 
-		const newFilters = {};
+		const newFilters: Record<string, unknown> = {};
 
 		searchParams.forEach((value, key) => {
 			const filterMatch = key.match(/^filter\[(.+)\]$/);
 
+			if (!filterMatch) return
+
 			if (filterMatch) {
 				const column = filterMatch[1];
 
-				if (filterSchema) {
-					const schemaField = filterSchema[column]
+				if (filters?.shape[column]) {
+					const parsed = filters.shape[column]
 
-					if (schemaField) {
-						const result = schemaField.safeParse(value)
+					if (parsed instanceof z4.ZodType) {
+						const result = parsed.safeParse(value)
 
 						if (result.success) {
 							newFilters[column] = result.data
@@ -133,12 +96,10 @@ export const useUrlQuery: UseUrlQuery = ({
 				}
 
 				newFilters[column] = value;
-
-				return
 			}
 		});
 
-		setFilters(newFilters)
+		setFilters(newFilters as Filters)
 	}, [normalizeFromUrl])
 
 	return {

@@ -3,9 +3,9 @@ import { afterEach, beforeEach, describe, expect, it, mock, jest } from "bun:tes
 import { renderHook, act } from "@testing-library/react";
 import fastCartesian from 'fast-cartesian'
 import { Permutation, PowerSet, } from 'js-combinatorics';
-import z4 from "zod/v4";
 import { powerSet } from "../src/combine";
 import { schemaForTest, expectedQueryStringForTest } from "@fabriciogferreira/schema-to-query-string";
+import { parseAsArrayOf, parseAsBoolean, parseAsInteger, parseAsString } from "nuqs";
 
 let mockedSearchParams: URLSearchParams;
 let pushSpy: ReturnType<typeof mock>
@@ -79,31 +79,38 @@ describe("filter", () => {
 	describe('normalizeFromUrl', () => {
 		describe('filters', () => {
 			const filters = [
-				['string', 'a'],
-				['number', '1'],
-				['boolean', 'true'],
-				['array', 'a,b,c'],
-				['null', '']
+				['string', 'a', 'a'],
+				['number', '1', 1],
+				['boolean', 'true', true],
+				['array', 'a,b,c', ['a', 'b', 'c']],
+				['null', '', '']
 			]
 
-			const cases: [string, string[][]][] = powerSet(filters)
+			const cases: [string, unknown[][]][] = powerSet(filters)
 				.map((subset) => [subset.map(subsubset => subsubset.join('='))
 					.join('&'), subset]);
 
-			it.each(cases)('when query string is %s', (_, params: string[][]) => {
+			it.each(cases)('when query string is %s', (_, params: unknown[][]) => {
 				const queryString = params.map(([key, value]) => `filter[${key}]=${value}`).join('&');
 
 				mockedSearchParams = new URLSearchParams(queryString);
 
-				let expectedFilters: Record<string, string> = {};
+				let expectedFilters: Record<string, unknown> = {};
 
-				params.forEach(([key, value]) => {
-					expectedFilters[key] = value;
+				params.forEach(([key, value, expect]) => {
+					expectedFilters[key] = expect;
 				})
 
 				const { result } = renderHook(() =>
 					useUrlQuery({
 						normalizeFromUrl: true,
+						filters: {
+							string: parseAsString,
+							number: parseAsInteger,
+							boolean: parseAsBoolean,
+							array: parseAsArrayOf(parseAsString),
+							null: parseAsString
+						}
 					})
 				);
 
@@ -116,9 +123,9 @@ describe("filter", () => {
 				const { result } = renderHook(() =>
 					useUrlQuery({
 						normalizeFromUrl: true,
-						filterSchema: z4.object({
-							number: z4.number(),
-						})
+						filters: {
+							number: parseAsInteger
+						}
 					})
 				);
 
@@ -689,6 +696,9 @@ describe('query string', () => {
 			const { result } = renderHook(() =>
 				useUrlQuery({
 					sorts: ["name"],
+					filters: {
+						name: parseAsString
+					}
 				})
 			);
 

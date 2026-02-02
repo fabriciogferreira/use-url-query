@@ -27,6 +27,7 @@
 		"fast-cartesian": "^9.0.1",
 		"js-combinatorics": "^2.1.2",
 		"next": "^16.1.1",
+		"nuqs": "^2.8.7",
 		"zod": "^4.3.5"
 	}
 }

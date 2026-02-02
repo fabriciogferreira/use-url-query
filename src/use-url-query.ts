@@ -2,18 +2,23 @@ import { useMemo, useState, useEffect, useRef } from "react"
 import { useRouter } from 'next/router'
 import { useSearchParams } from "next/navigation";
 import { schemaToQueryString as fnSchemaToQueryString, SchemaToQueryStringConfig } from "@fabriciogferreira/schema-to-query-string";
-import z4, { ZodObject, ZodRawShape } from "zod/v4";
+import { SingleParserBuilder } from 'nuqs'
 
-type Params<S extends ZodRawShape> = {
-	sorts?: SortParam;
-	normalizeFromUrl?: boolean
-	filterSchema?: ZodObject<S>
-	schemaToQueryString?: SchemaToQueryStringConfig
+type InferParser<P> =
+  P extends SingleParserBuilder<infer T> ? T : number
+
+type FiltersFromConfig<C extends FiltersConfig> = {
+  [K in keyof C]?: InferParser<C[K]>
 }
 
-type FiltersFromSchema<S extends ZodRawShape> = {
-	[K in keyof S]?: z4.infer<S[K]>
-} & Record<string, unknown>
+type FiltersConfig = Record<string, SingleParserBuilder<any>>
+
+type Params<S extends FiltersConfig> = {
+	sorts?: SortParam;
+	normalizeFromUrl?: boolean
+	filters?: S
+	schemaToQueryString?: SchemaToQueryStringConfig
+}
 
 type Direction = '-' | ''
 
@@ -28,9 +33,22 @@ export type SortParam = Pick<Sort, 'column' | 'label'>[] | Sort['column'][]
 
 //FIELDS
 //FILTER
-type AddFilter = (column: string, value: unknown) => void;
-type RemoveFilter = (column: string, value: unknown) => void;
-type AddFilterDebounced = (column: string, value: unknown, timeout?: number) => void;
+type AddFilter<C extends FiltersConfig> =
+  <K extends keyof C>(
+    key: K,
+    value: InferParser<C[K]> | null
+  ) => void
+type RemoveFilter<C extends FiltersConfig> =
+  <K extends keyof C>(
+    key: K,
+    value: InferParser<C[K]> | null
+  ) => void
+type AddFilterDebounced<C extends FiltersConfig> =
+  <K extends keyof C>(
+		key: K,
+    value: InferParser<C[K]> | null,
+		timeout?: number
+	) => void;
 //INCLUDE
 type AddInclude = (includes: string | string[]) => void;
 type RemoveInclude = (includes: string | string[]) => void;
@@ -51,51 +69,39 @@ type ToggleSort = (column: string) => void;
 type ToggleSortDirection = (column: string) => void;
 //QUERY STRING
 
-export function useUrlQuery<S extends z4.ZodRawShape = {}>({
+export function useUrlQuery<T extends FiltersConfig>({
 	sorts: initialSorts = [],
 	normalizeFromUrl = true,
 	schemaToQueryString,
-	filterSchema
-}: Params<S> = {}) {
+	filters: allowedFilters
+}: Params<T> = {}) {
 	const router = useRouter();
 	const filterDebouncedTimeoutId = useRef<NodeJS.Timeout>(undefined);
 
 	//FIELDS
 	//FILTER
-	type Filters = FiltersFromSchema<S>
+	type Filters = FiltersFromConfig<T>
 	const [filters, setFilters] = useState<Filters>({});
 
 	const filtersQueryString = useMemo(() => {
-		return Object.entries(filters)
+		if (allowedFilters === undefined) return ''
+
+		return Object.entries(allowedFilters)
+			.filter(([key]) => filters[key])
 			.map(([key, value]) => {
-				let valueParsed = '';
-				if (typeof value === 'bigint') {
-					valueParsed = value.toString()
-				} else if (typeof value === 'boolean') {
-					valueParsed = value ? '1' : '0'
-				} else if (typeof value === 'number') {
-					valueParsed = value.toString()
-				} else if (typeof value === 'string') {
-					valueParsed = value
-				} else if (Array.isArray(value)) {
-					valueParsed = value.join(',')
-				} else {
-					valueParsed = JSON.stringify(value)
-				}
-
-				return `filter[${key}]=${value}`
+				return `filter[${key}]=${value.serialize(filters[key])}`
 			})
-			.join(',')
-	}, [filters]);
+			.join('&')
+	}, [filters, allowedFilters]);
 
-	const addFilter: AddFilter = (column: string, value: unknown) => {
+	const addFilter: AddFilter<T> = (column, value) => {
 		setFilters(prevFilters => ({
 			...prevFilters,
 			[column]: value
 		}));
 	};
 
-	const removeFilter: RemoveFilter = (column: string) => {
+	const removeFilter: RemoveFilter<T> = (column) => {
 		setFilters(prevFilters => {
 			const newFilters = { ...prevFilters }
 
@@ -105,7 +111,7 @@ export function useUrlQuery<S extends z4.ZodRawShape = {}>({
 		});
 	}
 
-	const addFilterDebounced: AddFilterDebounced = (column: string, value: unknown, timeout: number = 300) => {
+	const addFilterDebounced: AddFilterDebounced<T> = (column, value, timeout: number = 300) => {
 		clearTimeout(filterDebouncedTimeoutId.current);
 
 		filterDebouncedTimeoutId.current = setTimeout(() => {			
@@ -308,33 +314,26 @@ export function useUrlQuery<S extends z4.ZodRawShape = {}>({
 
 		if (searchParams == undefined) return
 
-		const newFilters: Record<string, unknown> = {};
+		const newFilters: Filters = {};
+
+		for (const key in allowedFilters) {
+			const paramValue = searchParams.get(`filter[${key}]`)
+			
+			const parser = allowedFilters[key]
+			
+			//TODO: test what happens if paramValue is null, because parser.parse(null) non accepts null
+			if (paramValue === null) {
+				continue
+			}
+
+			const filterValue = parser.parse(paramValue)
+
+			newFilters[key] = filterValue
+		}
+
 		const newSorts = [...sorts]
 
 		searchParams.forEach((value, key) => {
-			const filterMatch = key.match(/^filter\[(.+)\]$/);
-
-			if (filterMatch) {
-				const column = filterMatch[1];
-
-				if (filterSchema?.shape[column]) {
-					const field = filterSchema.shape[column]
-
-					if (field instanceof z4.ZodType) {
-						const result = field.safeParse(value)
-
-						if (result.success) {
-							newFilters[column] = result.data
-							return
-						}
-					}
-				}
-
-				newFilters[column] = value;
-
-				return
-			}
-
 			const sortMatch = key.match(/^sort$/);
 
 			if (sortMatch) {
@@ -372,7 +371,7 @@ export function useUrlQuery<S extends z4.ZodRawShape = {}>({
 			}
 		});
 
-		setFilters(newFilters as Filters)
+		setFilters(newFilters)
 		setSorts(newSorts)
 	}, [normalizeFromUrl])
 

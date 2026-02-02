@@ -18,7 +18,7 @@ FEATURES FUTURAS:
 		//move...		void -> para move um item para determinada posição
 		//remove... void -> para remover, exemplo: removeFilter
 		//reset...  void -> para voltar os valores para os valores iniciais: resetFilters
-		//set...    void -> para setar algo que tem apenas um valor, exemplo: setPage
+		//set...    void -> para setar valor de um seto, exemplo: setFilter, vai remover os filtros atuais e adicionar pelos que foram setados
 		//toggle... void -> para alternar o valor do param ou o parâmetro, exemplo: toggleSort
 		//up??
 		//swap??
@@ -37,4 +37,30 @@ FEATURES FUTURAS:
 	- LESS_THAN_OR_EQUAL | <= | addFilterLTE | addFilter(key, value, '<=')
 - suporte a https://github.com/spatie/laravel-json-api-paginate
 - Laravel query builde segue: https://jsonapi.org/
+- Ordem de precedência (url e with default) no momento 
+-- valor url válido -> usa o dá url
+-- valor url inválido -> cai no default
+-- não tem valor -> cai no default
+- add uma função set filters
 
+
+MVP:
+- debounce para atualização da url
+
+
+//informações
+key e value sempre retorna uma string
+
+//Nova implementação de filtersSchema
+- mudar filtersSchema para filters
+- funções do filtre devem ter autocomplete do objeto passado
+- filtersSchema vai receber um objeto
+- a chave das propriedades vão ser os possíveis filtros
+- o valor das propriedades vão ser as configurações, ou ele pode receber:
+-- um objeto
+-- o que deve ser o valor padrão da propriedade que o usuário tem que passar caso ele não queria passar um  objeto? ele sempre deve passar um parser
+- se um o filtro estiver definido na url, mas não tem valor de propriedade definido { name: ??? } e não coloca o valor (?filter[name]=), devo retornar uma string vazia ('') como é feito normalmente?, sim devo retornar uma string
+- é possivel enviar um parâmetro com valor string vazia ('')?, sim é, limpar filtro
+- como vamos tirar um valor da url (nuqs tirando setando null no filtro)? sim, usar null para retirar parâmetro
+- não iterar sobre o searchparams, iterar sobre o sort e o filters (usar searchparams.get)
+- como vamos tirar um valor da url (nuqs tirando setando null no filtro)? sim, usar null para retirar parâmetro
