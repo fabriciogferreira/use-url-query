@@ -202,7 +202,14 @@ describe("filter", () => {
 	});
 })
 
-describe('include', () => {
+const includeCases = [
+	[undefined],
+	["relations"]
+] as const
+
+describe.each(includeCases)('include', (includeParam) => {
+	const includeParamFn = () => includeParam ? includeParam : 'include'
+
 	describe('addInclude', () => {
 		it.each([
 			['', ''],
@@ -210,7 +217,9 @@ describe('include', () => {
 			// [['author', 'comments'], 'author,comments'],
 		])('when set includes state as %s, includeString should return "%s"', (includes, includeString) => {
 			const { result } = renderHook(() =>
-				useUrlQuery()
+				useUrlQuery({
+					includeParamAs: includeParam
+				})
 			);
 
 			act(() => {
@@ -222,11 +231,13 @@ describe('include', () => {
 
 		it.each([
 			['', ''],
-			[['author'], 'include=author'],
-			[['author', 'comments'], 'include=author,comments'],
+			[['author'], includeParamFn() + '=author'],
+			[['author', 'comments'], includeParamFn() + '=author,comments'],
 		])('when set includes state as %s, includeQueryString should return "%s"', (includes, includeQueryString) => {
 			const { result } = renderHook(() =>
-				useUrlQuery()
+				useUrlQuery({
+					includeParamAs: includeParam
+				})
 			);
 
 			act(() => {
@@ -247,7 +258,9 @@ describe('include', () => {
 		[['one', 'two', 'three'], ['one', 'two', 'three'], ''],
 	])('removeInclude %s, %s', (initial, toRemove, expected) => {
 		const { result } = renderHook(() =>
-			useUrlQuery()
+			useUrlQuery({
+				includeParamAs: includeParam
+			})
 		);
 
 		act(() => {
@@ -263,7 +276,7 @@ describe('include', () => {
 		})
 
 		it('when set includes state as %s, includeQueryString should return "%s"', () => {
-			expect(result.current.includeQueryString).toBe(expected ? 'include=' + expected : expected);
+			expect(result.current.includeQueryString).toBe(expected ? includeParamFn() + '=' + expected : expected);
 		})
 	});
 });

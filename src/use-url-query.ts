@@ -18,6 +18,7 @@ type Params<S extends FiltersConfig> = {
 	normalizeFromUrl?: boolean
 	filters?: S
 	schemaToQueryString?: SchemaToQueryStringConfig
+	includeParamAs?: string
 	sortParamAs?: string
 }
 
@@ -75,7 +76,8 @@ export function useUrlQuery<T extends FiltersConfig>({
 	normalizeFromUrl = true,
 	schemaToQueryString,
 	filters: allowedFilters,
-	sortParamAs: sortParam = 'sort'
+	includeParamAs: includeParam = 'include',
+	sortParamAs: sortParam = 'sort',
 }: Params<T> = {}) {
 	const router = useRouter();
 	const filterDebouncedTimeoutId = useRef<NodeJS.Timeout>(undefined);
@@ -129,7 +131,7 @@ export function useUrlQuery<T extends FiltersConfig>({
 	}, [includes]);
 
 	const includeQueryString = useMemo(() => {
-		return includeString ? 'include=' + includeString : '';
+		return includeString ? includeParam + '=' + includeString : '';
 	}, [includeString]);
 
 	const addInclude: AddInclude = (includes: string | string[]) => {
