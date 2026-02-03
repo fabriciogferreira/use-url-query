@@ -360,7 +360,15 @@ describe('perPage', () => {
 	});
 });
 
-describe('sort', () => {
+
+const sortCases = [
+	[undefined],
+	["order"]
+] as const
+
+describe.each(sortCases)('sort', (sortParam) => {
+	const sortParamFn = () => sortParam ? sortParam : 'sort'
+
 	describe('param', () => {
 		const cases1: [SortParam, Sort[]][] = [
 			[
@@ -384,7 +392,8 @@ describe('sort', () => {
 		it.each(cases1)('should initialize sorts correctly', (inputSorts, expectedSorts) => {
 			const { result } = renderHook(() =>
 				useUrlQuery({
-					sorts: inputSorts
+					sorts: inputSorts,
+					sortParamAs: sortParam
 				})
 			);
 
@@ -428,7 +437,7 @@ describe('sort', () => {
 		])
 
 		it.each(cases)('when query string is %s', (queryString, sortings: string[][]) => {
-			mockedSearchParams = new URLSearchParams(`sort=${queryString}`);
+			mockedSearchParams = new URLSearchParams(sortParamFn() + `=${queryString}`);
 
 			const sorts: Record<string, string> = {};
 
@@ -441,7 +450,8 @@ describe('sort', () => {
 			const { result } = renderHook(() =>
 				useUrlQuery({
 					normalizeFromUrl: true,
-					sorts: ["a", "b", "c"]
+					sorts: ["a", "b", "c"],
+					sortParamAs: sortParam
 				})
 			);
 
@@ -461,7 +471,8 @@ describe('sort', () => {
 	describe('state', () => {
 		const { result } = renderHook(() =>
 			useUrlQuery({
-				sorts: ["asc", "desc"]
+				sorts: ["asc", "desc"],
+				sortParamAs: sortParam
 			})
 		);
 
@@ -475,8 +486,7 @@ describe('sort', () => {
 		});
 
 		it('should return correct sort query string', () => {
-
-			expect(result.current.sortQueryString).toBe('sort=asc,desc');
+			expect(result.current.sortQueryString).toBe(sortParamFn() + '=asc,desc');
 		});
 	})
 
@@ -491,7 +501,8 @@ describe('sort', () => {
 	])('moveSortUp %i, %i', (initialSorts, indexToMove, expectedSorts) => {
 		const { result } = renderHook(() =>
 			useUrlQuery({
-				sorts: initialSorts
+				sorts: initialSorts,
+				sortParamAs: sortParam,
 			})
 		);
 
@@ -512,12 +523,13 @@ describe('sort', () => {
 		});
 
 		it('when move index %i up, should update sortQueryString', () => {
-			expect(result.current.sortQueryString).toBe('sort=' + expectedSorts.join(','));
+			expect(result.current.sortQueryString).toBe(sortParamFn() + '=' + expectedSorts.join(','));
 		});
 	});
 	describe('moveSortUp', () => {
 		const { result: { current: urlQuery } } = renderHook(() =>
 			useUrlQuery({
+				sortParamAs: sortParam,
 				sorts: ["asc", "desc", "name"]
 			})
 		);
@@ -532,6 +544,7 @@ describe('sort', () => {
 	])('moveSortDown %i, %i', (initialSorts, indexToMove, expectedSorts) => {
 		const { result } = renderHook(() =>
 			useUrlQuery({
+				sortParamAs: sortParam,
 				sorts: initialSorts
 			})
 		);
@@ -553,13 +566,14 @@ describe('sort', () => {
 		});
 
 		it('when move index %i up, should update sortQueryString', () => {
-			expect(result.current.sortQueryString).toBe('sort=' + expectedSorts.join(','));
+			expect(result.current.sortQueryString).toBe(sortParamFn() + '=' + expectedSorts.join(','));
 		});
 	});
 
 	describe('moveSortDown', () => {
 		const { result: { current: urlQuery } } = renderHook(() =>
 			useUrlQuery({
+				sortParamAs: sortParam,
 				sorts: ["asc", "desc", "name"]
 			})
 		);
@@ -568,6 +582,7 @@ describe('sort', () => {
 	describe('hasSort', () => {
 		const { result: { current: urlQuery } } = renderHook(() =>
 			useUrlQuery({
+				sortParamAs: sortParam,
 				sorts: ["asc", "desc", "name"]
 			})
 		);
@@ -584,6 +599,7 @@ describe('sort', () => {
 	describe('toggleSort', () => {
 		const { result: { current: urlQuery } } = renderHook(() =>
 			useUrlQuery({
+				sortParamAs: sortParam,
 				sorts: ["asc", "desc"]
 			})
 		);
@@ -602,6 +618,7 @@ describe('sort', () => {
 	describe('toggleSortDirection', () => {
 		const { result: { current: urlQuery } } = renderHook(() =>
 			useUrlQuery({
+				sortParamAs: sortParam,
 				sorts: ["asc", "desc"]
 			})
 		);
@@ -624,6 +641,7 @@ describe('sort', () => {
 	describe('isSortAsc', () => {
 		const { result: { current: urlQuery } } = renderHook(() =>
 			useUrlQuery({
+				sortParamAs: sortParam,
 				sorts: ["asc", "desc"]
 			})
 		);
@@ -642,6 +660,7 @@ describe('sort', () => {
 	describe('isSortDesc', () => {
 		const { result: { current: urlQuery } } = renderHook(() =>
 			useUrlQuery({
+				sortParamAs: sortParam,
 				sorts: ["asc", "desc"]
 			})
 		);

@@ -18,6 +18,7 @@ type Params<S extends FiltersConfig> = {
 	normalizeFromUrl?: boolean
 	filters?: S
 	schemaToQueryString?: SchemaToQueryStringConfig
+	sortParamAs?: string
 }
 
 type Direction = '-' | ''
@@ -73,7 +74,8 @@ export function useUrlQuery<T extends FiltersConfig>({
 	sorts: initialSorts = [],
 	normalizeFromUrl = true,
 	schemaToQueryString,
-	filters: allowedFilters
+	filters: allowedFilters,
+	sortParamAs: sortParam = 'sort'
 }: Params<T> = {}) {
 	const router = useRouter();
 	const filterDebouncedTimeoutId = useRef<NodeJS.Timeout>(undefined);
@@ -193,7 +195,7 @@ export function useUrlQuery<T extends FiltersConfig>({
 		.join(','), [sorts]);
 
 	const sortQueryString = useMemo(() => {
-		return sortString ? 'sort=' + sortString : '';
+		return sortString ? sortParam + '=' + sortString : '';
 	}, [sortString]);
 
 	const findSort: FindSort = (column: string) => {
@@ -334,7 +336,7 @@ export function useUrlQuery<T extends FiltersConfig>({
 		const newSorts = [...sorts]
 
 		searchParams.forEach((value, key) => {
-			const sortMatch = key.match(/^sort$/);
+			const sortMatch = key.match(`^${sortParam}$`);
 
 			if (sortMatch) {
 				const sortings = value.split(',');
