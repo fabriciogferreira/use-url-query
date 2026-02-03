@@ -1,5 +1,5 @@
 FEATURES FUTURAS:
-- permitir alterar os nomes dos parâmetros: include, filter, sort, fields, append, etc (https://spatie.be/docs/laravel-query-builder/v6/installation-setup)
+- permitir alterar os nomes dos parâmetros: fields, append, etc (https://spatie.be/docs/laravel-query-builder/v6/installation-setup)
 		exemplo sortAs: 'order',
 - permitir alterar o nome do sufixo de contagens, ex: usersCount => users_count
 - permitir alterar o nome do sufixo do exists, ex: usersExists => users_exists
@@ -42,7 +42,11 @@ FEATURES FUTURAS:
 -- valor url inválido -> cai no default
 -- não tem valor -> cai no default
 - add uma função set filters
+- atualizar url opcionalmente
 
+TESTES:
+- se não houver nada na url, sorts, filters e etc não devem ter nada
+- criar backend para tests?
 
 MVP:
 - debounce para atualização da url
