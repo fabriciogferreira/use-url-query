@@ -18,6 +18,7 @@ type Params<S extends FiltersConfig> = {
 	normalizeFromUrl?: boolean
 	filters?: S
 	schemaToQueryString?: SchemaToQueryStringConfig
+	filterParamAs?: string
 	includeParamAs?: string
 	sortParamAs?: string
 }
@@ -76,6 +77,7 @@ export function useUrlQuery<T extends FiltersConfig>({
 	normalizeFromUrl = true,
 	schemaToQueryString,
 	filters: allowedFilters,
+	filterParamAs: filterParam = 'filter',
 	includeParamAs: includeParam = 'include',
 	sortParamAs: sortParam = 'sort',
 }: Params<T> = {}) {
@@ -93,7 +95,7 @@ export function useUrlQuery<T extends FiltersConfig>({
 		return Object.entries(allowedFilters)
 			.filter(([key]) => filters[key])
 			.map(([key, value]) => {
-				return `filter[${key}]=${value.serialize(filters[key])}`
+				return filterParam + `[${key}]=${value.serialize(filters[key])}`
 			})
 			.join('&')
 	}, [filters, allowedFilters]);
@@ -321,7 +323,7 @@ export function useUrlQuery<T extends FiltersConfig>({
 		const newFilters: Filters = {};
 
 		for (const key in allowedFilters) {
-			const paramValue = searchParams.get(`filter[${key}]`)
+			const paramValue = searchParams.get(filterParam + `[${key}]`)
 			
 			const parser = allowedFilters[key]
 			

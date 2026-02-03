@@ -75,7 +75,13 @@ describe("fields", () => {
 
 })
 
-describe("filter", () => {
+const filterCases = [
+	[undefined],
+	["relations"]
+] as const
+describe.each(filterCases)("filter", (filterParam) => {
+	const filterParamFn = () => filterParam ? filterParam : 'filter'
+
 	describe('normalizeFromUrl', () => {
 		describe('filters', () => {
 			const filters = [
@@ -91,7 +97,7 @@ describe("filter", () => {
 					.join('&'), subset]);
 
 			it.each(cases)('when query string is %s', (_, params: unknown[][]) => {
-				const queryString = params.map(([key, value]) => `filter[${key}]=${value}`).join('&');
+				const queryString = params.map(([key, value]) => filterParamFn() + `[${key}]=${value}`).join('&');
 
 				mockedSearchParams = new URLSearchParams(queryString);
 
@@ -110,7 +116,8 @@ describe("filter", () => {
 							boolean: parseAsBoolean,
 							array: parseAsArrayOf(parseAsString),
 							null: parseAsString
-						}
+						},
+						filterParamAs: filterParam
 					})
 				);
 
@@ -125,7 +132,8 @@ describe("filter", () => {
 						normalizeFromUrl: true,
 						filters: {
 							number: parseAsInteger
-						}
+						},
+						filterParamAs: filterParam
 					})
 				);
 
@@ -144,7 +152,9 @@ describe("filter", () => {
 		})
 
 		it('should add filter after timeout', () => {
-			const { result } = renderHook(() => useUrlQuery())
+			const { result } = renderHook(() => useUrlQuery({
+				filterParamAs: filterParam
+			}))
 
 			act(() => {
 				result.current.addFilterDebounced('name', 'John', 400)
@@ -162,7 +172,9 @@ describe("filter", () => {
 		})
 
 		it('should apply last call', async () => {
-			const { result } = renderHook(() => useUrlQuery())
+			const { result } = renderHook(() => useUrlQuery({
+				filterParamAs: filterParam
+			}))
 
 			act(() => {
 				result.current.addFilterDebounced('name', 'J', 200)
@@ -183,7 +195,9 @@ describe("filter", () => {
 
 		it('should have 300ms default timeout', () => {
 			//TODO: TESTE QUEBRA SE FOR MENOR QUE 300MS
-			const { result } = renderHook(() => useUrlQuery())
+			const { result } = renderHook(() => useUrlQuery({
+				filterParamAs: filterParam
+			}))
 
 			act(() => {
 				result.current.addFilterDebounced('name', 'John')
