@@ -5,7 +5,8 @@
     "module": "ESNext",
     "target": "ES2020",
     "moduleResolution": "Bundler",
-    "strict": true
+    "strict": true,
+		"skipLibCheck": true
   },
   "include": ["src"]
 }
