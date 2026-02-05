@@ -73,9 +73,9 @@ type ToggleSortDirection = (column: string) => void;
 //QUERY STRING
 
 export function useUrlQuery<T extends FiltersConfig>({
-	sorts: initialSorts = [],
 	normalizeFromUrl = true,
 	schemaToQueryString,
+	sorts: allowedSorts = [],
 	filters: allowedFilters,
 	filterParamAs: filterParam = 'filter',
 	includeParamAs: includeParam = 'include',
@@ -181,10 +181,10 @@ export function useUrlQuery<T extends FiltersConfig>({
 	}
 
 	//SORT
-	const normalizedSorts: Sort[] = initialSorts.map(Parasort => {
-		const restItem = typeof Parasort === 'string'
-			? { column: Parasort, label: Parasort }
-			: Parasort;
+	const normalizedSorts: Sort[] = allowedSorts.map(allowedSort => {
+		const restItem = typeof allowedSort === 'string'
+			? { column: allowedSort, label: allowedSort }
+			: allowedSort;
 
 		return {
 			...restItem,
@@ -195,8 +195,11 @@ export function useUrlQuery<T extends FiltersConfig>({
 
 	const [sorts, setSorts] = useState<Sort[]>(normalizedSorts);
 
-	const sortString = useMemo(() => sorts.filter(sort => sort.include).map(sort => sort.direction + sort.column)
-		.join(','), [sorts]);
+	const sortString = useMemo(() => {
+		return sorts.filter(sort => sort.include)
+			.map(sort => sort.direction + sort.column)
+				.join(',')
+	}, [sorts]);
 
 	const sortQueryString = useMemo(() => {
 		return sortString ? sortParam + '=' + sortString : '';

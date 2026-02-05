@@ -44,6 +44,12 @@ OPÇÕES:
 -- append
 -- include
 -- filter
+- Valores padrões
+-- sorts
+-- filters
+-- append
+-- include
+-- field
 
 TESTES:
 - se não houver nada na url, sorts, filters e etc não devem ter nada
