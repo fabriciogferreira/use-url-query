@@ -104,6 +104,7 @@ describe.each(filterCases)("filter", (filterParam) => {
 				let expectedFilters: Record<string, unknown> = {};
 
 				params.forEach(([key, value, expect]) => {
+					// @ts-expect-error 
 					expectedFilters[key] = expect;
 				})
 

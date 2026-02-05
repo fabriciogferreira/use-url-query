@@ -38,7 +38,7 @@
 		"url": "git+https://github.com/fabriciogferreira/use-url-query.git"
 	},
 	"scripts": {
-		"build": "tsup",
+		"build": "tsc",
 		"test": "bun test",
 		"prepublishOnly": "bun run build"
 	},

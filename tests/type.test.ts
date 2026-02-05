@@ -2,6 +2,7 @@ import { useUrlQuery } from "../src/use-url-query";
 import { expect, it, mock } from "bun:test";
 import { renderHook} from "@testing-library/react";
 import z4 from "zod/v4";
+import { parseAsInteger } from "nuqs";
 
 let mockedSearchParams: URLSearchParams;
 let pushSpy: ReturnType<typeof mock>
@@ -39,9 +40,9 @@ it('check type expected', () => {
 	const { result } = renderHook(() =>
 		useUrlQuery({
 			normalizeFromUrl: true,
-			filterSchema: z4.object({
-				number: zUrlLooseNumber,
-			})
+			filters: {
+				number: parseAsInteger
+			}
 		})
 	);
 
