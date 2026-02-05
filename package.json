@@ -1,6 +1,9 @@
 {
 	"name": "@fabriciogferreira/use-url-query",
 	"version": "0.1.0",
+	"publishConfig": {
+		"access": "public"
+	},
 	"private": false,
 	"description": "Hook in typescript + Nextjs for Spatie Laravel Query Builder",
 	"type": "module",
