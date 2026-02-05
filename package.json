@@ -1,14 +1,41 @@
 {
 	"name": "@fabriciogferreira/use-url-query",
-	"description": "Hook in typescript + Nextjs for Spatie Laravel Query Builder",
 	"version": "0.1.0",
-	"private": true,
-	"main": "dist/index.cjs",
-	"module": "dist/index.js",
+	"description": "Hook in typescript + Nextjs for Spatie Laravel Query Builder",
+	"type": "module",
+	"license": "MIT",
+	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
+	"exports": {
+		".": {
+			"import": "./dist/index.js",
+			"types": "./dist/index.d.ts"
+		}
+	},
 	"files": [
 		"dist"
 	],
+	"keywords": [
+		"react",
+		"react-hook",
+		"hooks",
+		"typescript",
+		"nextjs",
+		"url",
+		"search-params",
+		"query-params",
+		"querystring",
+		"filters",
+		"sorting",
+		"pagination",
+		"query-builder",
+		"laravel",
+		"spatie"
+	],
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/fabriciogferreira/use-url-query.git"
+	},
 	"scripts": {
 		"build": "tsup",
 		"test": "bun test",

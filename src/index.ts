@@ -1,1 +1,4 @@
-export { useUrlQuery } from './use-url-query';
+export {
+	useUrlQuery,
+	Sort,
+} from './use-url-query';
