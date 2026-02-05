@@ -72,3 +72,17 @@ USO:
 
 MVP:
 - debounce para atualização da url
+
+Devo usar object ou array, ou os dois para filters, sorts, etc?
+- Ver beneficios do programador vs beneficios de quem usa a lib 
+- exemplo: se eu usar array de objetos, o usuário apenas precisa fazer:
+sorts.map(...
+mas para o programador alterar um atributo do sort, devo fazer:
+sorts.findIndex(...
+
+-exemplo2: se eu retornar um objeto, o usuário precisa fazer:
+Object.entries(sorts).map(([key, config]) =>...
+mas para o programador alterar um atributo do sort, devo fazer:
+sorts[key].atribute = ...
+
+ou devo usar os dois?
