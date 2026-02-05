@@ -72,6 +72,16 @@ USO:
 -- enable??
 -- disable??
 
+SEGURANÇA EM DESENVOLVIMENTO:
+- gerar throw
+-- sorts
+-- normalizeFromUrl
+-- filters
+-- schemaToQueryString
+-- filterParamAs
+-- includeParamAs
+-- sortParamAs
+
 //Nova implementação de filtersSchema
 - é possivel enviar um parâmetro com valor string vazia ('')?, sim é, limpar filtro
 - como vamos tirar um valor da url (nuqs tirando setando null no filtro)? sim, usar null para retirar parâmetro
