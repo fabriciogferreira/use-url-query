@@ -1,6 +1,5 @@
 import { useMemo, useState, useEffect, useRef } from "react"
-import { useRouter } from 'next/router'
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { schemaToQueryString as fnSchemaToQueryString, SchemaToQueryStringConfig } from "@fabriciogferreira/schema-to-query-string";
 import { SingleParserBuilder } from 'nuqs'
 
@@ -82,6 +81,7 @@ export function useUrlQuery<T extends FiltersConfig>({
 	sortParamAs: sortParam = 'sort',
 }: Params<T> = {}) {
 	const router = useRouter();
+	const searchParams = useSearchParams();
 	const filterDebouncedTimeoutId = useRef<NodeJS.Timeout>(undefined);
 
 	//FIELDS
@@ -318,8 +318,6 @@ export function useUrlQuery<T extends FiltersConfig>({
 	//LIFECYCLE
 	useEffect(() => {
 		if (!normalizeFromUrl) return;
-
-		const searchParams = useSearchParams();
 
 		if (searchParams == undefined) return
 

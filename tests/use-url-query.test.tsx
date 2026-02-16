@@ -16,7 +16,7 @@ mock.module("next/navigation", () => ({
 	useSearchParams: () => mockedSearchParams,
 }));
 
-mock.module('next/router', () => ({
+mock.module('next/navigation', () => ({
 	useRouter: () => ({
 		push: pushSpy,
 	}),
