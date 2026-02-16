@@ -178,9 +178,9 @@ describe.each(filterCases)("filter", (filterParam) => {
 			}))
 
 			act(() => {
-				result.current.addFilterDebounced('name', 'J', 200)
-				result.current.addFilterDebounced('name', 'Jo', 500)
-				result.current.addFilterDebounced('name', 'John', 300)
+				result.current.addFilterDebounced('name', 'J', 300)
+				result.current.addFilterDebounced('name', 'Jo', 700)
+				result.current.addFilterDebounced('name', 'John', 500)
 			})
 
 			expect(result.current.filters).toEqual({})
@@ -194,8 +194,8 @@ describe.each(filterCases)("filter", (filterParam) => {
 			})
 		});
 
-		it('should have 300ms default timeout', () => {
-			//TODO: TESTE QUEBRA SE FOR MENOR QUE 300MS
+		it('should have 500ms default timeout', () => {
+			//TODO: TESTE QUEBRA SE FOR MENOR QUE 500MS
 			const { result } = renderHook(() => useUrlQuery({
 				filterParamAs: filterParam
 			}))
@@ -207,7 +207,7 @@ describe.each(filterCases)("filter", (filterParam) => {
 			expect(result.current.filters).toEqual({})
 
 			act(() => {
-				jest.advanceTimersByTime(300)
+				jest.advanceTimersByTime(500)
 			})
 
 			expect(result.current.filters).toEqual({

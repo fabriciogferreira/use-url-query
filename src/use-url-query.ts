@@ -117,7 +117,7 @@ export function useUrlQuery<T extends FiltersConfig>({
 		});
 	}
 
-	const addFilterDebounced: AddFilterDebounced<T> = (column, value, timeout: number = 300) => {
+	const addFilterDebounced: AddFilterDebounced<T> = (column, value, timeout: number = 500) => {
 		clearTimeout(filterDebouncedTimeoutId.current);
 
 		filterDebouncedTimeoutId.current = setTimeout(() => {			
