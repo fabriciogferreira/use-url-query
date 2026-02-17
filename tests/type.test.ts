@@ -52,3 +52,19 @@ it('check type expected', () => {
 
 	expect(true).toBe(true);
 })
+
+
+it("should be typescript error when filter non exist", () => {
+	mockedSearchParams = new URLSearchParams('');
+
+	const { result } = renderHook(() =>
+		useUrlQuery({
+			normalizeFromUrl: true,
+		})
+	);
+
+	// @ts-expect-error
+	result.current.filters.nonExist;
+
+	expect(true).toBe(true);
+})
