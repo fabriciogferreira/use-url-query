@@ -1,5 +1,5 @@
 import { Sort, SortParam, useUrlQuery } from "../src/use-url-query";
-import { afterEach, beforeEach, describe, expect, it, mock, jest } from "bun:test";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 import fastCartesian from 'fast-cartesian'
 import { Permutation, PowerSet, } from 'js-combinatorics';
@@ -7,20 +7,18 @@ import { powerSet } from "../src/combine";
 import { schemaForTest, expectedQueryStringForTest } from "@fabriciogferreira/schema-to-query-string";
 import { parseAsArrayOf, parseAsBoolean, parseAsInteger, parseAsString } from "nuqs";
 
-let mockedSearchParams: URLSearchParams;
-let pushSpy: ReturnType<typeof mock>
-
-pushSpy = mock(() => { })
-
-mock.module("next/navigation", () => ({
-	useSearchParams: () => mockedSearchParams,
+const { mockedSearchParamsRef, pushSpy } = vi.hoisted(() => ({
+	mockedSearchParamsRef: { current: new URLSearchParams("") as URLSearchParams },
+	pushSpy: vi.fn(),
 }));
 
-mock.module('next/navigation', () => ({
+vi.mock("next/navigation", () => ({
+	useSearchParams: () => mockedSearchParamsRef.current,
+	usePathname: () => "/",
 	useRouter: () => ({
 		push: pushSpy,
 	}),
-}))
+}));
 
 
 // TESTES FUTUROS
@@ -71,9 +69,7 @@ Query Strings
 	queryString
 */
 
-describe("fields", () => {
-
-})
+describe.todo("fields")
 
 const filterCases = [
 	[undefined],
@@ -99,7 +95,7 @@ describe.each(filterCases)("filter", (filterParam) => {
 			it.each(cases)('when query string is %s', (_, params: unknown[][]) => {
 				const queryString = params.map(([key, value]) => filterParamFn() + `[${key}]=${value}`).join('&');
 
-				mockedSearchParams = new URLSearchParams(queryString);
+				mockedSearchParamsRef.current = new URLSearchParams(queryString);
 
 				let expectedFilters: Record<string, unknown> = {};
 
@@ -126,7 +122,7 @@ describe.each(filterCases)("filter", (filterParam) => {
 			})
 
 			it('should return undefined when filter is missing', () => {
-				mockedSearchParams = new URLSearchParams('');
+				mockedSearchParamsRef.current = new URLSearchParams('');
 
 				const { result } = renderHook(() =>
 					useUrlQuery({
@@ -145,11 +141,11 @@ describe.each(filterCases)("filter", (filterParam) => {
 
 	describe('addFilterDebounced', () => {
 		beforeEach(() => {
-			jest.useFakeTimers()
+			vi.useFakeTimers()
 		})
 
 		afterEach(() => {
-			jest.useRealTimers()
+			vi.useRealTimers()
 		})
 
 		it('should add filter after timeout', () => {
@@ -164,7 +160,7 @@ describe.each(filterCases)("filter", (filterParam) => {
 			expect(result.current.filters).toEqual({})
 
 			act(() => {
-				jest.advanceTimersByTime(400)
+				vi.advanceTimersByTime(400)
 			})
 
 			expect(result.current.filters).toEqual({
@@ -186,7 +182,7 @@ describe.each(filterCases)("filter", (filterParam) => {
 			expect(result.current.filters).toEqual({})
 
 			act(() => {
-				jest.advanceTimersByTime(500)
+				vi.advanceTimersByTime(500)
 			})
 
 			expect(result.current.filters).toEqual({
@@ -207,7 +203,7 @@ describe.each(filterCases)("filter", (filterParam) => {
 			expect(result.current.filters).toEqual({})
 
 			act(() => {
-				jest.advanceTimersByTime(500)
+				vi.advanceTimersByTime(500)
 			})
 
 			expect(result.current.filters).toEqual({
@@ -465,7 +461,7 @@ describe.each(sortCases)('sort', (sortParam) => {
 		])
 
 		it.each(cases)('when query string is %s', (queryString, sortings: string[][]) => {
-			mockedSearchParams = new URLSearchParams(sortParamFn() + `=${queryString}`);
+			mockedSearchParamsRef.current = new URLSearchParams(sortParamFn() + `=${queryString}`);
 
 			const sorts: Record<string, string> = {};
 
@@ -554,14 +550,7 @@ describe.each(sortCases)('sort', (sortParam) => {
 			expect(result.current.sortQueryString).toBe(sortParamFn() + '=' + expectedSorts.join(','));
 		});
 	});
-	describe('moveSortUp', () => {
-		const { result: { current: urlQuery } } = renderHook(() =>
-			useUrlQuery({
-				sortParamAs: sortParam,
-				sorts: ["asc", "desc", "name"]
-			})
-		);
-	});
+	describe.todo('moveSortUp')
 
 	describe.each([
 		[sorts, 0, ['2', '1', '3', '4', '5']],
@@ -598,14 +587,7 @@ describe.each(sortCases)('sort', (sortParam) => {
 		});
 	});
 
-	describe('moveSortDown', () => {
-		const { result: { current: urlQuery } } = renderHook(() =>
-			useUrlQuery({
-				sortParamAs: sortParam,
-				sorts: ["asc", "desc", "name"]
-			})
-		);
-	});
+	describe.todo('moveSortDown')
 
 	describe('hasSort', () => {
 		const { result: { current: urlQuery } } = renderHook(() =>
@@ -835,21 +817,32 @@ describe('query string', () => {
 	})
 
 	describe('isUpdateUrl', () => {
-		mockedSearchParams = new URLSearchParams('')
-
-		const { result } = renderHook(() =>
-			useUrlQuery({ normalizeFromUrl: true })
-		)
-
-		act(() => {
-			result.current.addInclude(['include1', 'include2'])
+		beforeEach(() => {
+			mockedSearchParamsRef.current = new URLSearchParams('')
+			pushSpy.mockClear()
 		})
 
 		it('expect push have been called', () => {
+			const { result } = renderHook(() =>
+				useUrlQuery({ normalizeFromUrl: true })
+			)
+
+			act(() => {
+				result.current.addInclude(['include1', 'include2'])
+			})
+
 			expect(pushSpy).toHaveBeenCalled()
 		})
 
 		it('expect push have been called with correct string', () => {
+			const { result } = renderHook(() =>
+				useUrlQuery({ normalizeFromUrl: true })
+			)
+
+			act(() => {
+				result.current.addInclude(['include1', 'include2'])
+			})
+
 			expect(pushSpy).toHaveBeenCalledWith(
 				expect.stringContaining('include=include1,include2')
 			)

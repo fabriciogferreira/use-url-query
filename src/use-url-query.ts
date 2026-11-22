@@ -1,16 +1,15 @@
 import { useMemo, useState, useEffect, useRef } from "react"
-import { useSearchParams, useRouter } from "next/navigation";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { schemaToQueryString as fnSchemaToQueryString, SchemaToQueryStringConfig } from "@fabriciogferreira/schema-to-query-string";
-import { SingleParserBuilder } from 'nuqs'
-
-type InferParser<P> =
-  P extends SingleParserBuilder<infer T> ? T : number
-
-type FiltersFromConfig<C extends FiltersConfig> = {
-  [K in keyof C]?: InferParser<C[K]>
-}
-
-type FiltersConfig = Record<string, SingleParserBuilder<any>>
+import {
+	type FiltersConfig,
+	type FiltersFromConfig,
+	type InferParser,
+	addFilterValue,
+	buildFiltersQueryString,
+	parseFiltersFromSearchParams,
+	removeFilterValue,
+} from './filters'
 
 type Params<S extends FiltersConfig> = {
 	sorts?: SortParam;
@@ -81,6 +80,7 @@ export function useUrlQuery<T extends FiltersConfig>({
 	sortParamAs: sortParam = 'sort',
 }: Params<T> = {}) {
 	const router = useRouter();
+	const pathname = usePathname();
 	const searchParams = useSearchParams();
 	const filterDebouncedTimeoutId = useRef<NodeJS.Timeout>(undefined);
 
@@ -90,31 +90,15 @@ export function useUrlQuery<T extends FiltersConfig>({
 	const [filters, setFilters] = useState<Filters>({});
 
 	const filtersQueryString = useMemo(() => {
-		if (allowedFilters === undefined) return ''
-
-		return Object.entries(allowedFilters)
-			.filter(([key]) => filters[key])
-			.map(([key, value]) => {
-				return filterParam + `[${key}]=${value.serialize(filters[key])}`
-			})
-			.join('&')
-	}, [filters, allowedFilters]);
+		return buildFiltersQueryString(allowedFilters, filters, filterParam)
+	}, [filters, allowedFilters, filterParam]);
 
 	const addFilter: AddFilter<T> = (column, value) => {
-		setFilters(prevFilters => ({
-			...prevFilters,
-			[column]: value
-		}));
+		setFilters(prevFilters => addFilterValue(prevFilters, column, value));
 	};
 
 	const removeFilter: RemoveFilter<T> = (column) => {
-		setFilters(prevFilters => {
-			const newFilters = { ...prevFilters }
-
-			delete newFilters[column]
-
-			return newFilters
-		});
+		setFilters(prevFilters => removeFilterValue(prevFilters, column));
 	}
 
 	const addFilterDebounced: AddFilterDebounced<T> = (column, value, timeout: number = 500) => {
@@ -312,8 +296,18 @@ export function useUrlQuery<T extends FiltersConfig>({
 	}, [filtersQueryString, sortQueryString, includeQueryString, pageQueryString, perPageQueryString]);
 
 	useEffect(() => {
-		router.push(queryString)
-	}, [queryString, router])
+		// App Router needs a path; `push('')` / bare `?…` remounts and stalls consumers.
+		// Compare decoded search (URLSearchParams encodes brackets; our queryString does not).
+		const href = `${pathname}${queryString}`
+		const currentSearch = searchParams?.toString() ?? ''
+		const hrefSearch = queryString.startsWith('?') ? queryString.slice(1) : queryString
+		const sameSearch =
+			decodeURIComponent(currentSearch) === decodeURIComponent(hrefSearch)
+		if (sameSearch) {
+			return
+		}
+		router.push(href)
+	}, [queryString, router, pathname, searchParams])
 
 	//LIFECYCLE
 	useEffect(() => {
@@ -321,22 +315,11 @@ export function useUrlQuery<T extends FiltersConfig>({
 
 		if (searchParams == undefined) return
 
-		const newFilters: Filters = {};
-
-		for (const key in allowedFilters) {
-			const paramValue = searchParams.get(filterParam + `[${key}]`)
-			
-			const parser = allowedFilters[key]
-			
-			//TODO: test what happens if paramValue is null, because parser.parse(null) non accepts null
-			if (paramValue === null) {
-				continue
-			}
-
-			const filterValue = parser.parse(paramValue)
-
-			newFilters[key] = filterValue
-		}
+		const newFilters = parseFiltersFromSearchParams(
+			searchParams,
+			allowedFilters,
+			filterParam,
+		)
 
 		const newSorts = [...sorts]
 

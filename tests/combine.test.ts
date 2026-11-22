@@ -1,4 +1,4 @@
-import { expect, it } from "bun:test";
+import { expect, it } from "vitest";
 import { combinations, powerSet } from "../src/combine";
 
 it('expect combinations of two arrays', () => {
