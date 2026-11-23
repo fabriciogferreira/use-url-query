@@ -607,84 +607,194 @@ describe.each(sortCases)('sort', (sortParam) => {
 	});
 
 	describe('toggleSort', () => {
-		const { result: { current: urlQuery } } = renderHook(() =>
-			useUrlQuery({
-				sortParamAs: sortParam,
-				sorts: ["asc", "desc"]
-			})
-		);
-
 		it('should toggle include state', () => {
+			const { result } = renderHook(() =>
+				useUrlQuery({
+					sortParamAs: sortParam,
+					sorts: ["asc", "desc"],
+				}),
+			)
+
 			act(() => {
-				urlQuery.toggleSort('asc');
+				result.current.toggleSort('asc')
 			})
 
-			const sort = urlQuery.sorts.find(s => s.column === 'asc');
+			expect(
+				result.current.sorts.find((sort) => sort.column === 'asc')?.include,
+			).toBe(true)
+		})
 
-			expect(sort?.include).toBe(true);
+		it('ignores columns outside the allowed catalog', () => {
+			const { result } = renderHook(() =>
+				useUrlQuery({
+					sortParamAs: sortParam,
+					sorts: ["asc", "desc"],
+				}),
+			)
+			const before = result.current.sorts
+
+			act(() => {
+				result.current.toggleSort('missing')
+			})
+
+			expect(result.current.sorts).toEqual(before)
+			expect(result.current.sortString).toBe('')
+		})
+	})
+
+	describe('cycleSort', () => {
+		it('cycles off → asc (last) → desc → off and updates sort query string', () => {
+			const { result } = renderHook(() =>
+				useUrlQuery({
+					sortParamAs: sortParam,
+					sorts: ["name", "email"],
+				}),
+			);
+
+			act(() => {
+				result.current.cycleSort("name");
+			});
+
+			expect(result.current.sorts.map((sort) => sort.column)).toEqual([
+				"email",
+				"name",
+			]);
+			expect(result.current.sortString).toBe("name");
+			expect(result.current.sortQueryString).toBe(`${sortParamFn()}=name`);
+
+			act(() => {
+				result.current.cycleSort("name");
+			});
+
+			expect(result.current.sortString).toBe("-name");
+			expect(result.current.sortQueryString).toBe(`${sortParamFn()}=-name`);
+
+			act(() => {
+				result.current.cycleSort("name");
+			});
+
+			expect(result.current.sortString).toBe("");
+			expect(result.current.sortQueryString).toBe("");
+			expect(
+				result.current.sorts.find((sort) => sort.column === "name"),
+			).toMatchObject({
+				include: false,
+				direction: "",
+			});
 		});
 	});
 
 	describe('toggleSortDirection', () => {
-		const { result: { current: urlQuery } } = renderHook(() =>
-			useUrlQuery({
-				sortParamAs: sortParam,
-				sorts: ["asc", "desc"]
-			})
-		);
-
-		urlQuery.toggleSortDirection('desc');
-
 		it('should toggle asc to desc', () => {
-			urlQuery.toggleSortDirection('asc');
-			const sort = urlQuery.sorts.find(s => s.column === 'asc');
-			expect(sort?.direction).toBe('-');
-		});
+			const { result } = renderHook(() =>
+				useUrlQuery({
+					sortParamAs: sortParam,
+					sorts: ["asc", "desc"],
+				}),
+			)
+
+			act(() => {
+				result.current.toggleSortDirection('asc')
+			})
+
+			expect(
+				result.current.sorts.find((sort) => sort.column === 'asc')?.direction,
+			).toBe('-')
+		})
+
+		it('ignores columns outside the allowed catalog', () => {
+			const { result } = renderHook(() =>
+				useUrlQuery({
+					sortParamAs: sortParam,
+					sorts: ["asc", "desc"],
+				}),
+			)
+			const before = result.current.sorts
+
+			act(() => {
+				result.current.toggleSortDirection('missing')
+			})
+
+			expect(result.current.sorts).toEqual(before)
+			expect(result.current.sortString).toBe('')
+		})
 
 		it('should toggle desc to asc', () => {
-			urlQuery.toggleSortDirection('desc');
-			const sort = urlQuery.sorts.find(s => s.column === 'desc');
-			expect(sort?.direction).toBe('');
-		});
-	});
+			const { result } = renderHook(() =>
+				useUrlQuery({
+					sortParamAs: sortParam,
+					sorts: ["asc", "desc"],
+				}),
+			)
+
+			act(() => {
+				result.current.toggleSortDirection('desc')
+			})
+			act(() => {
+				result.current.toggleSortDirection('desc')
+			})
+
+			expect(
+				result.current.sorts.find((sort) => sort.column === 'desc')?.direction,
+			).toBe('')
+		})
+	})
 
 	describe('isSortAsc', () => {
-		const { result: { current: urlQuery } } = renderHook(() =>
-			useUrlQuery({
-				sortParamAs: sortParam,
-				sorts: ["asc", "desc"]
-			})
-		);
-
-		urlQuery.toggleSortDirection('desc');
-
 		it('should return true is asc', () => {
-			expect(urlQuery.isSortAsc('asc')).toBe(true);
-		});
+			const { result } = renderHook(() =>
+				useUrlQuery({
+					sortParamAs: sortParam,
+					sorts: ["asc", "desc"],
+				}),
+			)
+
+			expect(result.current.isSortAsc('asc')).toBe(true)
+		})
 
 		it('should return false is desc', () => {
-			expect(urlQuery.isSortAsc('desc')).toBe(false);
-		});
-	});
+			const { result } = renderHook(() =>
+				useUrlQuery({
+					sortParamAs: sortParam,
+					sorts: ["asc", "desc"],
+				}),
+			)
+
+			act(() => {
+				result.current.toggleSortDirection('desc')
+			})
+
+			expect(result.current.isSortAsc('desc')).toBe(false)
+		})
+	})
 
 	describe('isSortDesc', () => {
-		const { result: { current: urlQuery } } = renderHook(() =>
-			useUrlQuery({
-				sortParamAs: sortParam,
-				sorts: ["asc", "desc"]
-			})
-		);
-
-		urlQuery.toggleSortDirection('desc');
-
 		it('should return false is asc', () => {
-			expect(urlQuery.isSortDesc('asc')).toBe(false);
-		});
+			const { result } = renderHook(() =>
+				useUrlQuery({
+					sortParamAs: sortParam,
+					sorts: ["asc", "desc"],
+				}),
+			)
+
+			expect(result.current.isSortDesc('asc')).toBe(false)
+		})
 
 		it('should return true is desc', () => {
-			expect(urlQuery.isSortDesc('desc')).toBe(true);
-		});
-	});
+			const { result } = renderHook(() =>
+				useUrlQuery({
+					sortParamAs: sortParam,
+					sorts: ["asc", "desc"],
+				}),
+			)
+
+			act(() => {
+				result.current.toggleSortDirection('desc')
+			})
+
+			expect(result.current.isSortDesc('desc')).toBe(true)
+		})
+	})
 })
 
 describe('query string', () => {

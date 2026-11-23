@@ -10,6 +10,15 @@ import {
 	parseFiltersFromSearchParams,
 	removeFilterValue,
 } from './filters'
+import {
+	type Direction,
+	type Sort,
+	type SortParam,
+	cycleSortValue,
+	normalizeSorts,
+} from './sorts'
+
+export type { Direction, Sort, SortParam } from './sorts'
 
 type Params<S extends FiltersConfig> = {
 	sorts?: SortParam;
@@ -20,17 +29,6 @@ type Params<S extends FiltersConfig> = {
 	includeParamAs?: string
 	sortParamAs?: string
 }
-
-type Direction = '-' | ''
-
-export type Sort = {
-	column: string;
-	label: string;
-	direction: Direction;
-	include: boolean;
-}
-
-export type SortParam = Pick<Sort, 'column' | 'label'>[] | Sort['column'][]
 
 //FIELDS
 //FILTER
@@ -68,6 +66,7 @@ type MoveSortUp = (column: string) => void;
 type MoveSortDown = (column: string) => void;
 type ToggleSort = (column: string) => void;
 type ToggleSortDirection = (column: string) => void;
+type CycleSort = (column: string) => void;
 //QUERY STRING
 
 export function useUrlQuery<T extends FiltersConfig>({
@@ -165,19 +164,7 @@ export function useUrlQuery<T extends FiltersConfig>({
 	}
 
 	//SORT
-	const normalizedSorts: Sort[] = allowedSorts.map(allowedSort => {
-		const restItem = typeof allowedSort === 'string'
-			? { column: allowedSort, label: allowedSort }
-			: allowedSort;
-
-		return {
-			...restItem,
-			direction: '',
-			include: false
-		}
-	});
-
-	const [sorts, setSorts] = useState<Sort[]>(normalizedSorts);
+	const [sorts, setSorts] = useState<Sort[]>(() => normalizeSorts(allowedSorts));
 
 	const sortString = useMemo(() => {
 		return sorts.filter(sort => sort.include)
@@ -212,59 +199,70 @@ export function useUrlQuery<T extends FiltersConfig>({
 		return isSortAscOrDesc(column, '-');
 	}
 	const moveSortUp: MoveSortUp = (column: string) => {
-		let index = sorts.findIndex(sort => sort.column === column);
+		setSorts((prevSorts) => {
+			const index = prevSorts.findIndex((sort) => sort.column === column)
 
-		if (index <= 0) return;
+			if (index <= 0) {
+				return prevSorts
+			}
 
-		const newSorts = [...sorts];
-
-		if (index >= 1) {
-			const from = index;
-			const to = index - 1;
-			[newSorts[from], newSorts[to]] = [newSorts[to], newSorts[from]];
-			index = to;
-		}
-
-		setSorts(newSorts)
+			const newSorts = [...prevSorts]
+			const from = index
+			const to = index - 1
+			;[newSorts[from], newSorts[to]] = [newSorts[to], newSorts[from]]
+			return newSorts
+		})
 	};
 
 	const moveSortDown: MoveSortDown = (column: string) => {
-		let index = sorts.findIndex(sort => sort.column === column);
+		setSorts((prevSorts) => {
+			const index = prevSorts.findIndex((sort) => sort.column === column)
 
-		if (index < 0 || index === sorts.length - 1) return;
+			if (index < 0 || index === prevSorts.length - 1) {
+				return prevSorts
+			}
 
-		const newSorts = [...sorts];
-
-		if (index < sorts.length - 1) {
-			const from = index;
-			const to = index + 1;
-			[newSorts[from], newSorts[to]] = [newSorts[to], newSorts[from]];
-			index = to;
-		}
-
-		setSorts(newSorts)
+			const newSorts = [...prevSorts]
+			const from = index
+			const to = index + 1
+			;[newSorts[from], newSorts[to]] = [newSorts[to], newSorts[from]]
+			return newSorts
+		})
 	}
 	const toggleSort: ToggleSort = (column: string) => {
-		const index = sorts.findIndex(sort => sort.column === column);
+		setSorts((prevSorts) => {
+			const index = prevSorts.findIndex((sort) => sort.column === column)
 
-		if (index === -1) return;
+			if (index === -1) {
+				return prevSorts
+			}
 
-		const newSorts = [...sorts];
-
-		newSorts[index].include = !newSorts[index].include;
-
-		setSorts(newSorts);
+			const newSorts = [...prevSorts]
+			newSorts[index] = {
+				...newSorts[index],
+				include: !newSorts[index].include,
+			}
+			return newSorts
+		})
 	};
 	const toggleSortDirection: ToggleSortDirection = (column: string) => {
-		const index = sorts.findIndex(s => s.column === column);
+		setSorts((prevSorts) => {
+			const index = prevSorts.findIndex((sort) => sort.column === column)
 
-		if (index === -1) return;
+			if (index === -1) {
+				return prevSorts
+			}
 
-		const newSorts = [...sorts];
-
-		newSorts[index].direction = newSorts[index].direction === '' ? '-' : '';
-
-		setSorts(newSorts);
+			const newSorts = [...prevSorts]
+			newSorts[index] = {
+				...newSorts[index],
+				direction: newSorts[index].direction === "" ? "-" : "",
+			}
+			return newSorts
+		})
+	}
+	const cycleSort: CycleSort = (column: string) => {
+		setSorts((prevSorts) => cycleSortValue(prevSorts, column));
 	}
 	// function sortToEnd() { };
 	// function sortToBegin() { };
@@ -408,6 +406,7 @@ export function useUrlQuery<T extends FiltersConfig>({
 		moveSortDown,
 		toggleSort,
 		toggleSortDirection,
+		cycleSort,
 		// sortToEnd,
 		// sortToBegin,
 		// swapSorts,

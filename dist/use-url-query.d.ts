@@ -1,5 +1,7 @@
 import { SchemaToQueryStringConfig } from "@fabriciogferreira/schema-to-query-string";
 import { type FiltersConfig, type FiltersFromConfig, type InferParser } from './filters';
+import { type Sort, type SortParam } from './sorts';
+export type { Direction, Sort, SortParam } from './sorts';
 type Params<S extends FiltersConfig> = {
     sorts?: SortParam;
     normalizeFromUrl?: boolean;
@@ -9,14 +11,6 @@ type Params<S extends FiltersConfig> = {
     includeParamAs?: string;
     sortParamAs?: string;
 };
-type Direction = '-' | '';
-export type Sort = {
-    column: string;
-    label: string;
-    direction: Direction;
-    include: boolean;
-};
-export type SortParam = Pick<Sort, 'column' | 'label'>[] | Sort['column'][];
 type AddFilter<C extends FiltersConfig> = <K extends keyof C>(key: K, value: InferParser<C[K]> | null) => void;
 type RemoveFilter<C extends FiltersConfig> = <K extends keyof C>(key: K, value: InferParser<C[K]> | null) => void;
 type AddFilterDebounced<C extends FiltersConfig> = <K extends keyof C>(key: K, value: InferParser<C[K]> | null, timeout?: number) => void;
@@ -33,6 +27,7 @@ type MoveSortUp = (column: string) => void;
 type MoveSortDown = (column: string) => void;
 type ToggleSort = (column: string) => void;
 type ToggleSortDirection = (column: string) => void;
+type CycleSort = (column: string) => void;
 export declare function useUrlQuery<T extends FiltersConfig>({ normalizeFromUrl, schemaToQueryString, sorts: allowedSorts, filters: allowedFilters, filterParamAs: filterParam, includeParamAs: includeParam, sortParamAs: sortParam, }?: Params<T>): {
     filters: FiltersFromConfig<T>;
     filtersQueryString: string;
@@ -64,6 +59,6 @@ export declare function useUrlQuery<T extends FiltersConfig>({ normalizeFromUrl,
     moveSortDown: MoveSortDown;
     toggleSort: ToggleSort;
     toggleSortDirection: ToggleSortDirection;
+    cycleSort: CycleSort;
     queryString: string;
 };
-export {};

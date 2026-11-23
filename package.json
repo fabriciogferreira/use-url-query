@@ -46,12 +46,15 @@
 		"test:watch": "vitest",
 		"test:coverage": "vitest run --coverage",
 		"test:coverage:filter": "vitest run --coverage tests/filter.test.tsx --coverage.include=src/filters.ts --coverage.thresholds.lines=100 --coverage.thresholds.functions=100 --coverage.thresholds.branches=100 --coverage.thresholds.statements=100",
+		"test:mutate": "stryker run",
 		"playground:dev": "next dev playground --port 3017 --hostname 127.0.0.1",
 		"test:browser": "playwright test",
 		"prepublishOnly": "bun run build"
 	},
 	"devDependencies": {
 		"@playwright/test": "^1.57.0",
+		"@stryker-mutator/core": "^10.1.1",
+		"@stryker-mutator/vitest-runner": "^10.1.1",
 		"@testing-library/react": "^16.3.1",
 		"@types/react": "^19.2.7",
 		"@vitest/coverage-v8": "^5.1.1",

@@ -2,6 +2,7 @@ import { useMemo, useState, useEffect, useRef } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { schemaToQueryString as fnSchemaToQueryString } from "@fabriciogferreira/schema-to-query-string";
 import { addFilterValue, buildFiltersQueryString, parseFiltersFromSearchParams, removeFilterValue, } from './filters';
+import { cycleSortValue, normalizeSorts, } from './sorts';
 //QUERY STRING
 export function useUrlQuery({ normalizeFromUrl = true, schemaToQueryString, sorts: allowedSorts = [], filters: allowedFilters, filterParamAs: filterParam = 'filter', includeParamAs: includeParam = 'include', sortParamAs: sortParam = 'sort', } = {}) {
     const router = useRouter();
@@ -64,17 +65,7 @@ export function useUrlQuery({ normalizeFromUrl = true, schemaToQueryString, sort
         setPerPage(null);
     };
     //SORT
-    const normalizedSorts = allowedSorts.map(allowedSort => {
-        const restItem = typeof allowedSort === 'string'
-            ? { column: allowedSort, label: allowedSort }
-            : allowedSort;
-        return {
-            ...restItem,
-            direction: '',
-            include: false
-        };
-    });
-    const [sorts, setSorts] = useState(normalizedSorts);
+    const [sorts, setSorts] = useState(() => normalizeSorts(allowedSorts));
     const sortString = useMemo(() => {
         return sorts.filter(sort => sort.include)
             .map(sort => sort.direction + sort.column)
@@ -102,46 +93,61 @@ export function useUrlQuery({ normalizeFromUrl = true, schemaToQueryString, sort
         return isSortAscOrDesc(column, '-');
     };
     const moveSortUp = (column) => {
-        let index = sorts.findIndex(sort => sort.column === column);
-        if (index <= 0)
-            return;
-        const newSorts = [...sorts];
-        if (index >= 1) {
+        setSorts((prevSorts) => {
+            const index = prevSorts.findIndex((sort) => sort.column === column);
+            if (index <= 0) {
+                return prevSorts;
+            }
+            const newSorts = [...prevSorts];
             const from = index;
             const to = index - 1;
             [newSorts[from], newSorts[to]] = [newSorts[to], newSorts[from]];
-            index = to;
-        }
-        setSorts(newSorts);
+            return newSorts;
+        });
     };
     const moveSortDown = (column) => {
-        let index = sorts.findIndex(sort => sort.column === column);
-        if (index < 0 || index === sorts.length - 1)
-            return;
-        const newSorts = [...sorts];
-        if (index < sorts.length - 1) {
+        setSorts((prevSorts) => {
+            const index = prevSorts.findIndex((sort) => sort.column === column);
+            if (index < 0 || index === prevSorts.length - 1) {
+                return prevSorts;
+            }
+            const newSorts = [...prevSorts];
             const from = index;
             const to = index + 1;
             [newSorts[from], newSorts[to]] = [newSorts[to], newSorts[from]];
-            index = to;
-        }
-        setSorts(newSorts);
+            return newSorts;
+        });
     };
     const toggleSort = (column) => {
-        const index = sorts.findIndex(sort => sort.column === column);
-        if (index === -1)
-            return;
-        const newSorts = [...sorts];
-        newSorts[index].include = !newSorts[index].include;
-        setSorts(newSorts);
+        setSorts((prevSorts) => {
+            const index = prevSorts.findIndex((sort) => sort.column === column);
+            if (index === -1) {
+                return prevSorts;
+            }
+            const newSorts = [...prevSorts];
+            newSorts[index] = {
+                ...newSorts[index],
+                include: !newSorts[index].include,
+            };
+            return newSorts;
+        });
     };
     const toggleSortDirection = (column) => {
-        const index = sorts.findIndex(s => s.column === column);
-        if (index === -1)
-            return;
-        const newSorts = [...sorts];
-        newSorts[index].direction = newSorts[index].direction === '' ? '-' : '';
-        setSorts(newSorts);
+        setSorts((prevSorts) => {
+            const index = prevSorts.findIndex((sort) => sort.column === column);
+            if (index === -1) {
+                return prevSorts;
+            }
+            const newSorts = [...prevSorts];
+            newSorts[index] = {
+                ...newSorts[index],
+                direction: newSorts[index].direction === "" ? "-" : "",
+            };
+            return newSorts;
+        });
+    };
+    const cycleSort = (column) => {
+        setSorts((prevSorts) => cycleSortValue(prevSorts, column));
     };
     // function sortToEnd() { };
     // function sortToBegin() { };
@@ -257,6 +263,7 @@ export function useUrlQuery({ normalizeFromUrl = true, schemaToQueryString, sort
         moveSortDown,
         toggleSort,
         toggleSortDirection,
+        cycleSort,
         // sortToEnd,
         // sortToBegin,
         // swapSorts,

@@ -7,3 +7,7 @@ blob-report
 
 # Vitest reports and artifacts
 .vitest/
+
+# Stryker
+.stryker-tmp
+reports/mutation
