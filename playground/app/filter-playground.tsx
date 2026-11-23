@@ -23,7 +23,7 @@ export function FilterPlayground() {
 					onChange={(event) => {
 						const value = event.target.value
 						if (value === '') {
-							removeFilter('key', null)
+							removeFilter('key')
 							return
 						}
 						addFilter('key', value)

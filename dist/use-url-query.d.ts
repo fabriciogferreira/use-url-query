@@ -12,7 +12,7 @@ type Params<S extends FiltersConfig> = {
     sortParamAs?: string;
 };
 type AddFilter<C extends FiltersConfig> = <K extends keyof C>(key: K, value: InferParser<C[K]> | null) => void;
-type RemoveFilter<C extends FiltersConfig> = <K extends keyof C>(key: K, value: InferParser<C[K]> | null) => void;
+type RemoveFilter<C extends FiltersConfig> = <K extends keyof C>(key: K) => void;
 type AddFilterDebounced<C extends FiltersConfig> = <K extends keyof C>(key: K, value: InferParser<C[K]> | null, timeout?: number) => void;
 type AddInclude = (includes: string | string[]) => void;
 type RemoveInclude = (includes: string | string[]) => void;

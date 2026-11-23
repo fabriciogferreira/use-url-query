@@ -38,10 +38,7 @@ type AddFilter<C extends FiltersConfig> =
     value: InferParser<C[K]> | null
   ) => void
 type RemoveFilter<C extends FiltersConfig> =
-  <K extends keyof C>(
-    key: K,
-    value: InferParser<C[K]> | null
-  ) => void
+  <K extends keyof C>(key: K) => void
 type AddFilterDebounced<C extends FiltersConfig> =
   <K extends keyof C>(
 		key: K,

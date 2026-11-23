@@ -214,7 +214,7 @@ describe('filter (useUrlQuery)', () => {
 			expect(result.current.queryString).toBe('?filter[key]=value')
 
 			act(() => {
-				result.current.removeFilter('key', null)
+				result.current.removeFilter('key')
 			})
 
 			expect(result.current.queryString).toBe('')
