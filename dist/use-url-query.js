@@ -3,6 +3,7 @@ import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { schemaToQueryString as fnSchemaToQueryString } from "@fabriciogferreira/schema-to-query-string";
 import { addFieldValue, buildFieldsQueryString, parseFieldsFromSearchParams, removeFieldValue, } from './fields';
 import { addFilterValue, buildFiltersQueryString, parseFiltersFromSearchParams, removeFilterValue, } from './filters';
+import { addIncludeValue, buildIncludesQueryString, clearIncludeValue, parseIncludesFromSearchParams, removeIncludeValue, setIncludeValue, } from './includes';
 import { cycleSortValue, normalizeSorts, } from './sorts';
 //QUERY STRING
 export function useUrlQuery({ normalizeFromUrl = true, schemaToQueryString, sorts: allowedSorts = [], filters: allowedFilters, fieldParamAs: fieldParam = 'fields', filterParamAs: filterParam = 'filter', includeParamAs: includeParam = 'include', sortParamAs: sortParam = 'sort', } = {}) {
@@ -38,21 +39,24 @@ export function useUrlQuery({ normalizeFromUrl = true, schemaToQueryString, sort
         }, timeout);
     };
     //INCLUDE
-    const [includes, setIncludes] = useState([]);
+    const [includes, setIncludesState] = useState([]);
     const includeString = useMemo(() => {
         return includes.join(',');
     }, [includes]);
     const includeQueryString = useMemo(() => {
-        return includeString ? includeParam + '=' + includeString : '';
-    }, [includeString]);
-    const addInclude = (includes) => {
-        const newIncludes = Array.isArray(includes) ? includes : [includes];
-        setIncludes(newIncludes);
+        return buildIncludesQueryString(includes, includeParam);
+    }, [includes, includeParam]);
+    const addInclude = (includeNames) => {
+        setIncludesState((prevIncludes) => addIncludeValue(prevIncludes, includeNames));
     };
-    const removeInclude = (includesParam) => {
-        const removeIncludes = Array.isArray(includesParam) ? includesParam : [includesParam];
-        const newIncludes = includes.filter(inc => !removeIncludes.includes(inc));
-        setIncludes(newIncludes);
+    const removeInclude = (includeNames) => {
+        setIncludesState((prevIncludes) => removeIncludeValue(prevIncludes, includeNames));
+    };
+    const setIncludes = (includeNames) => {
+        setIncludesState((prevIncludes) => setIncludeValue(prevIncludes, includeNames));
+    };
+    const clearIncludes = () => {
+        setIncludesState((prevIncludes) => clearIncludeValue(prevIncludes));
     };
     //PAGE
     const [page, setPage] = useState(null);
@@ -198,6 +202,7 @@ export function useUrlQuery({ normalizeFromUrl = true, schemaToQueryString, sort
         if (searchParams == undefined)
             return;
         const newFields = parseFieldsFromSearchParams(searchParams, fieldParam);
+        const newIncludes = parseIncludesFromSearchParams(searchParams, includeParam);
         const newFilters = parseFiltersFromSearchParams(searchParams, allowedFilters, filterParam);
         const newSorts = [...sorts];
         searchParams.forEach((value, key) => {
@@ -231,6 +236,7 @@ export function useUrlQuery({ normalizeFromUrl = true, schemaToQueryString, sort
             }
         });
         setFields(newFields);
+        setIncludesState(newIncludes);
         setFilters(newFilters);
         setSorts(newSorts);
     }, [normalizeFromUrl]);
@@ -252,6 +258,8 @@ export function useUrlQuery({ normalizeFromUrl = true, schemaToQueryString, sort
         includeQueryString,
         addInclude,
         removeInclude,
+        setIncludes,
+        clearIncludes,
         //PAGE
         page,
         pageString,

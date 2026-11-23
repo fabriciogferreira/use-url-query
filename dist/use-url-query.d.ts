@@ -21,6 +21,8 @@ type RemoveFilter<C extends FiltersConfig> = <K extends keyof C>(key: K) => void
 type AddFilterDebounced<C extends FiltersConfig> = <K extends keyof C>(key: K, value: InferParser<C[K]> | null, timeout?: number) => void;
 type AddInclude = (includes: string | string[]) => void;
 type RemoveInclude = (includes: string | string[]) => void;
+type SetIncludes = (includes: string | string[]) => void;
+type ClearIncludes = () => void;
 type Page = number | null;
 type RemovePage = () => void;
 type PerPage = number | null;
@@ -48,6 +50,8 @@ export declare function useUrlQuery<T extends FiltersConfig>({ normalizeFromUrl,
     includeQueryString: string;
     addInclude: AddInclude;
     removeInclude: RemoveInclude;
+    setIncludes: SetIncludes;
+    clearIncludes: ClearIncludes;
     page: Page;
     pageString: string;
     pageQueryString: string;

@@ -18,6 +18,14 @@ import {
 	removeFilterValue,
 } from './filters'
 import {
+	addIncludeValue,
+	buildIncludesQueryString,
+	clearIncludeValue,
+	parseIncludesFromSearchParams,
+	removeIncludeValue,
+	setIncludeValue,
+} from './includes'
+import {
 	type Direction,
 	type Sort,
 	type SortParam,
@@ -57,8 +65,10 @@ type AddFilterDebounced<C extends FiltersConfig> =
 		timeout?: number
 	) => void;
 //INCLUDE
-type AddInclude = (includes: string | string[]) => void;
-type RemoveInclude = (includes: string | string[]) => void;
+type AddInclude = (includes: string | string[]) => void
+type RemoveInclude = (includes: string | string[]) => void
+type SetIncludes = (includes: string | string[]) => void
+type ClearIncludes = () => void
 //PAGE
 type Page = number | null
 type RemovePage = () => void;
@@ -134,28 +144,36 @@ export function useUrlQuery<T extends FiltersConfig>({
 	};
 
 	//INCLUDE
-	const [includes, setIncludes] = useState<string[]>([]);
+	const [includes, setIncludesState] = useState<string[]>([])
 
 	const includeString = useMemo(() => {
-		return includes.join(',');
-	}, [includes]);
+		return includes.join(',')
+	}, [includes])
 
 	const includeQueryString = useMemo(() => {
-		return includeString ? includeParam + '=' + includeString : '';
-	}, [includeString]);
+		return buildIncludesQueryString(includes, includeParam)
+	}, [includes, includeParam])
 
-	const addInclude: AddInclude = (includes: string | string[]) => {
-		const newIncludes = Array.isArray(includes) ? includes : [includes];
-
-		setIncludes(newIncludes);
+	const addInclude: AddInclude = (includeNames) => {
+		setIncludesState((prevIncludes) =>
+			addIncludeValue(prevIncludes, includeNames),
+		)
 	}
 
-	const removeInclude: RemoveInclude = (includesParam: string | string[]) => {
-		const removeIncludes = Array.isArray(includesParam) ? includesParam : [includesParam];
+	const removeInclude: RemoveInclude = (includeNames) => {
+		setIncludesState((prevIncludes) =>
+			removeIncludeValue(prevIncludes, includeNames),
+		)
+	}
 
-		const newIncludes = includes.filter(inc => !removeIncludes.includes(inc));
+	const setIncludes: SetIncludes = (includeNames) => {
+		setIncludesState((prevIncludes) =>
+			setIncludeValue(prevIncludes, includeNames),
+		)
+	}
 
-		setIncludes(newIncludes);
+	const clearIncludes: ClearIncludes = () => {
+		setIncludesState((prevIncludes) => clearIncludeValue(prevIncludes))
 	}
 
 	//PAGE
@@ -340,6 +358,11 @@ export function useUrlQuery<T extends FiltersConfig>({
 
 		const newFields = parseFieldsFromSearchParams(searchParams, fieldParam)
 
+		const newIncludes = parseIncludesFromSearchParams(
+			searchParams,
+			includeParam,
+		)
+
 		const newFilters = parseFiltersFromSearchParams(
 			searchParams,
 			allowedFilters,
@@ -387,6 +410,7 @@ export function useUrlQuery<T extends FiltersConfig>({
 		});
 
 		setFields(newFields)
+		setIncludesState(newIncludes)
 		setFilters(newFilters)
 		setSorts(newSorts)
 	}, [normalizeFromUrl])
@@ -409,6 +433,8 @@ export function useUrlQuery<T extends FiltersConfig>({
 		includeQueryString,
 		addInclude,
 		removeInclude,
+		setIncludes,
+		clearIncludes,
 		//PAGE
 		page,
 		pageString,

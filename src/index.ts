@@ -10,6 +10,14 @@ export {
 	parseFieldsFromSearchParams,
 	removeFieldValue,
 } from './fields'
+export {
+	addIncludeValue,
+	buildIncludesQueryString,
+	clearIncludeValue,
+	parseIncludesFromSearchParams,
+	removeIncludeValue,
+	setIncludeValue,
+} from './includes'
 export type {
 	Direction,
 	Sort,
