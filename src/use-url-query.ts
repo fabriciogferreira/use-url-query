@@ -2,6 +2,13 @@ import { useMemo, useState, useEffect, useRef } from "react"
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { schemaToQueryString as fnSchemaToQueryString, SchemaToQueryStringConfig } from "@fabriciogferreira/schema-to-query-string";
 import {
+	type Fields,
+	addFieldValue,
+	buildFieldsQueryString,
+	parseFieldsFromSearchParams,
+	removeFieldValue,
+} from './fields'
+import {
 	type FiltersConfig,
 	type FiltersFromConfig,
 	type InferParser,
@@ -18,6 +25,7 @@ import {
 	normalizeSorts,
 } from './sorts'
 
+export type { Fields } from './fields'
 export type { Direction, Sort, SortParam } from './sorts'
 
 type Params<S extends FiltersConfig> = {
@@ -25,12 +33,15 @@ type Params<S extends FiltersConfig> = {
 	normalizeFromUrl?: boolean
 	filters?: S
 	schemaToQueryString?: SchemaToQueryStringConfig
+	fieldParamAs?: string
 	filterParamAs?: string
 	includeParamAs?: string
 	sortParamAs?: string
 }
 
 //FIELDS
+type AddField = (resource: string, fields: string | string[]) => void
+type RemoveField = (resource: string, fields?: string | string[]) => void
 //FILTER
 type AddFilter<C extends FiltersConfig> =
   <K extends keyof C>(
@@ -71,6 +82,7 @@ export function useUrlQuery<T extends FiltersConfig>({
 	schemaToQueryString,
 	sorts: allowedSorts = [],
 	filters: allowedFilters,
+	fieldParamAs: fieldParam = 'fields',
 	filterParamAs: filterParam = 'filter',
 	includeParamAs: includeParam = 'include',
 	sortParamAs: sortParam = 'sort',
@@ -81,6 +93,22 @@ export function useUrlQuery<T extends FiltersConfig>({
 	const filterDebouncedTimeoutId = useRef<NodeJS.Timeout>(undefined);
 
 	//FIELDS
+	const [fields, setFields] = useState<Fields>({})
+
+	const fieldsQueryString = useMemo(() => {
+		return buildFieldsQueryString(fields, fieldParam)
+	}, [fields, fieldParam])
+
+	const addField: AddField = (resource, fieldNames) => {
+		setFields((prevFields) => addFieldValue(prevFields, resource, fieldNames))
+	}
+
+	const removeField: RemoveField = (resource, fieldNames) => {
+		setFields((prevFields) =>
+			removeFieldValue(prevFields, resource, fieldNames),
+		)
+	}
+
 	//FILTER
 	type Filters = FiltersFromConfig<T>
 	const [filters, setFilters] = useState<Filters>({});
@@ -286,9 +314,9 @@ export function useUrlQuery<T extends FiltersConfig>({
 	}
 
 	const queryString = useMemo(() => {
-		const parts = [filtersQueryString, sortQueryString, includeQueryString, pageQueryString, perPageQueryString, schemaConverted].filter(Boolean);
+		const parts = [fieldsQueryString, filtersQueryString, sortQueryString, includeQueryString, pageQueryString, perPageQueryString, schemaConverted].filter(Boolean);
 		return parts.length ? '?' + parts.join('&') : '';
-	}, [filtersQueryString, sortQueryString, includeQueryString, pageQueryString, perPageQueryString]);
+	}, [fieldsQueryString, filtersQueryString, sortQueryString, includeQueryString, pageQueryString, perPageQueryString, schemaConverted]);
 
 	useEffect(() => {
 		// App Router needs a path; `push('')` / bare `?…` remounts and stalls consumers.
@@ -309,6 +337,8 @@ export function useUrlQuery<T extends FiltersConfig>({
 		if (!normalizeFromUrl) return;
 
 		if (searchParams == undefined) return
+
+		const newFields = parseFieldsFromSearchParams(searchParams, fieldParam)
 
 		const newFilters = parseFiltersFromSearchParams(
 			searchParams,
@@ -356,18 +386,17 @@ export function useUrlQuery<T extends FiltersConfig>({
 			}
 		});
 
+		setFields(newFields)
 		setFilters(newFilters)
 		setSorts(newSorts)
 	}, [normalizeFromUrl])
 
 	return {
 		//FIELDS
-		// fields
-		// fieldsString
-		// fieldsQueryString
-		// addField,
-		// removeField,
-		// toggleField,
+		fields,
+		fieldsQueryString,
+		addField,
+		removeField,
 		//FILTER
 		filters,
 		filtersQueryString,

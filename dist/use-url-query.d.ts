@@ -1,16 +1,21 @@
 import { SchemaToQueryStringConfig } from "@fabriciogferreira/schema-to-query-string";
+import { type Fields } from './fields';
 import { type FiltersConfig, type FiltersFromConfig, type InferParser } from './filters';
 import { type Sort, type SortParam } from './sorts';
+export type { Fields } from './fields';
 export type { Direction, Sort, SortParam } from './sorts';
 type Params<S extends FiltersConfig> = {
     sorts?: SortParam;
     normalizeFromUrl?: boolean;
     filters?: S;
     schemaToQueryString?: SchemaToQueryStringConfig;
+    fieldParamAs?: string;
     filterParamAs?: string;
     includeParamAs?: string;
     sortParamAs?: string;
 };
+type AddField = (resource: string, fields: string | string[]) => void;
+type RemoveField = (resource: string, fields?: string | string[]) => void;
 type AddFilter<C extends FiltersConfig> = <K extends keyof C>(key: K, value: InferParser<C[K]> | null) => void;
 type RemoveFilter<C extends FiltersConfig> = <K extends keyof C>(key: K) => void;
 type AddFilterDebounced<C extends FiltersConfig> = <K extends keyof C>(key: K, value: InferParser<C[K]> | null, timeout?: number) => void;
@@ -28,7 +33,11 @@ type MoveSortDown = (column: string) => void;
 type ToggleSort = (column: string) => void;
 type ToggleSortDirection = (column: string) => void;
 type CycleSort = (column: string) => void;
-export declare function useUrlQuery<T extends FiltersConfig>({ normalizeFromUrl, schemaToQueryString, sorts: allowedSorts, filters: allowedFilters, filterParamAs: filterParam, includeParamAs: includeParam, sortParamAs: sortParam, }?: Params<T>): {
+export declare function useUrlQuery<T extends FiltersConfig>({ normalizeFromUrl, schemaToQueryString, sorts: allowedSorts, filters: allowedFilters, fieldParamAs: fieldParam, filterParamAs: filterParam, includeParamAs: includeParam, sortParamAs: sortParam, }?: Params<T>): {
+    fields: Fields;
+    fieldsQueryString: string;
+    addField: AddField;
+    removeField: RemoveField;
     filters: FiltersFromConfig<T>;
     filtersQueryString: string;
     addFilter: AddFilter<T>;

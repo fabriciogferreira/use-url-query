@@ -69,8 +69,6 @@ Query Strings
 	queryString
 */
 
-describe.todo("fields")
-
 const filterCases = [
 	[undefined],
 	["relations"]
@@ -799,11 +797,14 @@ describe.each(sortCases)('sort', (sortParam) => {
 
 describe('query string', () => {
 	describe('state', () => {
-		const cases = powerSet(['filter', 'sort', 'include', 'page', 'perPage']).map((subset): [string, string, string[]] => {
+		const cases = powerSet(['field', 'filter', 'sort', 'include', 'page', 'perPage']).map((subset): [string, string, string[]] => {
 			let parts: string[] = []
 
 			subset.forEach(element => {
 				switch (element) {
+					case 'field':
+						parts.push('fields[users]=id,name');
+						break;
 					case 'filter':
 						parts.push('filter[name]=jhon');
 						break;
@@ -843,6 +844,11 @@ describe('query string', () => {
 
 			subset.forEach(element => {
 				switch (element) {
+					case 'field':
+						act(() => {
+							result.current.addField('users', ['id', 'name']);
+						});
+						break;
 					case 'filter':
 						act(() => {
 							result.current.addFilter('name', 'jhon');

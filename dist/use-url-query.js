@@ -1,14 +1,26 @@
 import { useMemo, useState, useEffect, useRef } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { schemaToQueryString as fnSchemaToQueryString } from "@fabriciogferreira/schema-to-query-string";
+import { addFieldValue, buildFieldsQueryString, parseFieldsFromSearchParams, removeFieldValue, } from './fields';
 import { addFilterValue, buildFiltersQueryString, parseFiltersFromSearchParams, removeFilterValue, } from './filters';
 import { cycleSortValue, normalizeSorts, } from './sorts';
 //QUERY STRING
-export function useUrlQuery({ normalizeFromUrl = true, schemaToQueryString, sorts: allowedSorts = [], filters: allowedFilters, filterParamAs: filterParam = 'filter', includeParamAs: includeParam = 'include', sortParamAs: sortParam = 'sort', } = {}) {
+export function useUrlQuery({ normalizeFromUrl = true, schemaToQueryString, sorts: allowedSorts = [], filters: allowedFilters, fieldParamAs: fieldParam = 'fields', filterParamAs: filterParam = 'filter', includeParamAs: includeParam = 'include', sortParamAs: sortParam = 'sort', } = {}) {
     const router = useRouter();
     const pathname = usePathname();
     const searchParams = useSearchParams();
     const filterDebouncedTimeoutId = useRef(undefined);
+    //FIELDS
+    const [fields, setFields] = useState({});
+    const fieldsQueryString = useMemo(() => {
+        return buildFieldsQueryString(fields, fieldParam);
+    }, [fields, fieldParam]);
+    const addField = (resource, fieldNames) => {
+        setFields((prevFields) => addFieldValue(prevFields, resource, fieldNames));
+    };
+    const removeField = (resource, fieldNames) => {
+        setFields((prevFields) => removeFieldValue(prevFields, resource, fieldNames));
+    };
     const [filters, setFilters] = useState({});
     const filtersQueryString = useMemo(() => {
         return buildFiltersQueryString(allowedFilters, filters, filterParam);
@@ -164,9 +176,9 @@ export function useUrlQuery({ normalizeFromUrl = true, schemaToQueryString, sort
         schemaConverted = resultSchemaConverted;
     }
     const queryString = useMemo(() => {
-        const parts = [filtersQueryString, sortQueryString, includeQueryString, pageQueryString, perPageQueryString, schemaConverted].filter(Boolean);
+        const parts = [fieldsQueryString, filtersQueryString, sortQueryString, includeQueryString, pageQueryString, perPageQueryString, schemaConverted].filter(Boolean);
         return parts.length ? '?' + parts.join('&') : '';
-    }, [filtersQueryString, sortQueryString, includeQueryString, pageQueryString, perPageQueryString]);
+    }, [fieldsQueryString, filtersQueryString, sortQueryString, includeQueryString, pageQueryString, perPageQueryString, schemaConverted]);
     useEffect(() => {
         // App Router needs a path; `push('')` / bare `?…` remounts and stalls consumers.
         // Compare decoded search (URLSearchParams encodes brackets; our queryString does not).
@@ -185,6 +197,7 @@ export function useUrlQuery({ normalizeFromUrl = true, schemaToQueryString, sort
             return;
         if (searchParams == undefined)
             return;
+        const newFields = parseFieldsFromSearchParams(searchParams, fieldParam);
         const newFilters = parseFiltersFromSearchParams(searchParams, allowedFilters, filterParam);
         const newSorts = [...sorts];
         searchParams.forEach((value, key) => {
@@ -217,17 +230,16 @@ export function useUrlQuery({ normalizeFromUrl = true, schemaToQueryString, sort
                 return;
             }
         });
+        setFields(newFields);
         setFilters(newFilters);
         setSorts(newSorts);
     }, [normalizeFromUrl]);
     return {
         //FIELDS
-        // fields
-        // fieldsString
-        // fieldsQueryString
-        // addField,
-        // removeField,
-        // toggleField,
+        fields,
+        fieldsQueryString,
+        addField,
+        removeField,
         //FILTER
         filters,
         filtersQueryString,
